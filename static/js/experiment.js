@@ -7,8 +7,8 @@ get_num_trials = function() {
         url: "/num_trials",
         method: 'get',
         success: function (resp) {
-            num_trials = resp.practice_repeats + resp.experiment_repeats;
-            num_practice_trials = resp.practice_repeats;
+            num_trials = (resp.practice_repeats + resp.experiment_repeats)*resp.n_trials;
+            num_practice_trials = resp.practice_repeats*resp.n_trials;
             $("#num_trials").html(num_trials);
             if (trial <= num_practice_trials) {
                 $("#practice-trial").html("This is a practice trial");
@@ -36,9 +36,7 @@ create_agent = function() {
         success: function (resp) {
             my_node_id = resp.node.id;
             my_network_id = resp.node.network_id;
-            my_generation = resp.node.property2;
-            level = 0;
-            get_levels();
+            get_num_bandits();
         },
         error: function (err) {
             console.log(err);
@@ -52,6 +50,38 @@ create_agent = function() {
         }
     });
 };
+
+get_num_bandits = function() {
+    reqwest({
+        url: "/num_bandits",
+        method: 'get',
+        type: 'json',
+        success: function (resp) {
+            num_bandits = resp.num_bandits;
+            current_bandit = Math.floor(Math.random()*num_bandits);
+            get_treasure_tile();
+        }
+    });
+};
+
+get_treasure_tile = function() {
+    reqwest({
+        url: "/treasure_tile/" + my_network_id + "/" + current_bandit,
+        method: 'get',
+        type: 'json',
+        success: function (resp) {
+            current_treasure_tile = resp.treasure_tile;
+            prepare_for_trial();
+        }
+    });
+};
+
+
+
+
+
+
+
 
 get_levels = function() {
     reqwest({

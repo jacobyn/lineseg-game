@@ -15,7 +15,7 @@
         </script>
         <link rel="stylesheet" type="text/css" href="static/css/bootstrap.min.css">
         <link rel="stylesheet" type="text/css" href="static/css/wallace.css">
-        <link rel="stylesheet" type="text/css" href="static/css/cooperation.css">
+        <link rel="stylesheet" type="text/css" href="static/css/bandit.css">
     </head>
 
     <body>
@@ -25,56 +25,8 @@
                 <p><span id="practice-trial">This is a practice trial</span></p>
             </div>
             <div class="center_div">
-                <h3 id="instruction_question_1"></h3>
-                <p id="instruction_details_1"></p>
-                <p id="instruction_qualifier_1"></p>
-                <p id="social_information_1"></p>
-                <p id="social_information2_1"></p>
-                <p id="instruction_keys_1"></p>
-                <div id="radio_div_1" style="display:none;">
-                    <form>
-                        <div style="display:none;">
-                            <input type="radio" id="null_1" name="invest" value="-1" checked>ZZZ
-                        </div>
-                        <input type="radio" name="invest" value="1" /><label class="coop_label">Yes</label>
-                        <input type="radio" name="invest" value="0" /><label class="coop_label">No</label>
-                    </form>
-                </div>
-                <h3 id="instruction_question_2"></h3>
-                <p id="instruction_details_2"></p>
-                <p id="instruction_qualifier_2"></p>
-                <p id="social_information_2"></p>
-                <p id="social_information2_2"></p>
-                <p id="instruction_keys_2"></p>
-                <div id="radio_div_2" style="display:none;">
-                    <form>
-                        <div style="display:none;">
-                            <input type="radio" id="null_2" name="secretary" value="-1" checked>ZZZ
-                        </div>
-                        <input type="radio" name="secretary" value="1" /><label class="coop_label">Yes</label>
-                        <input type="radio" name="secretary" value="0" /><label class="coop_label">No</label>
-                    </form>
-                </div>
-                <h3 id="instruction_question_3"></h3>
-                <p id="instruction_details_3"></p>
-                <p id="instruction_qualifier_3"></p>
-                <p id="social_information_3"></p>
-                <p id="social_information2_3"></p>
-                <p id="instruction_keys_3"></p>
-                <div id="radio_div_3" style="display:none;">
-                    <form>
-                        <div style="display:none;">
-                            <input type="radio" id="null_3" name="accountant" value="-1" checked>ZZZ
-                        </div>
-                        <input type="radio" name="accountant" value="1" /><label class="coop_label">Yes</label>
-                        <input type="radio" name="accountant" value="0" /><label class="coop_label">No</label>
-                    </form>
-                </div>
-                <button id="begin_button" type="button" class="btn btn-primary btn-lg" onClick="draw_question()">BEGIN</button>
-                <button id="submit_button" type="button" class="btn btn-primary btn-lg" onClick="submit_answers()">SUBMIT</button>
-                <p id="warning_1"></p>
-                <p id="warning_2"></p>
-                <p id="warning_3"></p>
+                <h3 id="mini_title"></h3>
+                <p id="instructions"></p>
             </div>
         </div>
     </body>
