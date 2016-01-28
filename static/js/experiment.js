@@ -3,6 +3,7 @@ var num_trials;
 var num_practice_trials;
 var tiles_checked = 0;
 
+// get all the details to correctly present the trial number bar
 get_num_trials = function() {
     reqwest({
         url: "/num_trials",
@@ -52,6 +53,8 @@ create_agent = function() {
     });
 };
 
+// how many bandits are there?
+// use this to pick a bandit
 get_num_bandits = function() {
     reqwest({
         url: "/num_bandits",
@@ -65,6 +68,7 @@ get_num_bandits = function() {
     });
 };
 
+// how many arms does my bandit have?
 get_num_tiles = function() {
     reqwest({
         url: "/num_arms/" + my_network_id + "/" + current_bandit,
@@ -77,6 +81,7 @@ get_num_tiles = function() {
     });
 };
 
+// which is the good arm?
 get_treasure_tile = function() {
     reqwest({
         url: "/treasure_tile/" + my_network_id + "/" + current_bandit,
@@ -89,6 +94,7 @@ get_treasure_tile = function() {
     });
 };
 
+// what is my memory and curiosity?
 get_genes = function() {
     reqwest({
         url: "/node/" + my_node_id + "/infos",
@@ -113,6 +119,7 @@ get_genes = function() {
     });
 };
 
+// show the tiles
 prepare_for_trial = function() {
     tiles_checked = 0;
     for (i = 0; i < num_tiles; i++) {
@@ -124,6 +131,7 @@ prepare_for_trial = function() {
     }
 };
 
+// look under a tile
 check_tile = function (tile) {
     if (tiles_checked < my_curiosity) {
         tiles_checked = tiles_checked + 1;
@@ -136,12 +144,26 @@ check_tile = function (tile) {
             $(name_of_tile).html(name_of_image);
         }
         if (tiles_checked == my_curiosity) {
-            prepare_for_decision();
+            $("#instructions").html("<p>Please wait...");
+            setTimeout(function() {
+                prepare_for_decision();
+            }, 2000);
         }
     }
 };
 
+// prepare the tiles for the final decision
 prepare_for_decision = function () {
+    $("#instructions").html("<p>Please make your final choice of tile.</p>");
+    for (i = 0; i < num_tiles; i++) {
+        name_of_tile = "#tile_" + (i+1);
+        name_of_image = '<img src="/static/images/tile_' + (i+1) + '.png" onClick="choose_tile(' + (i+1) + ')"/>';
+        $(name_of_tile).html(name_of_image);
+    }
+};
+
+// commit to a particular tile 
+choose_tile = function () {
 
 };
 
