@@ -1,6 +1,7 @@
 var trial = 0;
 var num_trials;
 var num_practice_trials;
+var tiles_checked = 0;
 
 get_num_trials = function() {
     reqwest({
@@ -59,6 +60,18 @@ get_num_bandits = function() {
         success: function (resp) {
             num_bandits = resp.num_bandits;
             current_bandit = Math.floor(Math.random()*num_bandits);
+            get_num_tiles();
+        }
+    });
+};
+
+get_num_tiles = function() {
+    reqwest({
+        url: "/num_arms/" + my_network_id + "/" + current_bandit,
+        method: 'get',
+        type: 'json',
+        success: function (resp) {
+            num_tiles = resp.num_tiles;
             get_treasure_tile();
         }
     });
@@ -71,9 +84,65 @@ get_treasure_tile = function() {
         type: 'json',
         success: function (resp) {
             current_treasure_tile = resp.treasure_tile;
+            get_genes();
+        }
+    });
+};
+
+get_genes = function() {
+    reqwest({
+        url: "/node/" + my_node_id + "/infos",
+        method: 'get',
+        type: 'json',
+        data: {
+            info_type: "Gene"
+        },
+        success: function (resp) {
+            infos = resp.infos;
+            console.log(infos);
+            for (i = 0; i < infos.length; i++) {
+                info = infos[i];
+                if (info.type == "curiosity_gene") {
+                    my_curiosity = info.contents;
+                } else {
+                    my_memory = info.contents;
+                }
+            }
             prepare_for_trial();
         }
     });
+};
+
+prepare_for_trial = function() {
+    tiles_checked = 0;
+    for (i = 0; i < num_tiles; i++) {
+        name_of_tile = "#tile_" + (i+1);
+        name_of_image = '<img src="/static/images/tile_' + (i+1) + '.png" onClick="check_tile(' + (i+1) + ')"/>';
+        $(name_of_tile).html(name_of_image);
+        $("#mini_title").html("<p>you are at bandit " + current_bandit + "</p>");
+        $("#instructions").html("<p>You can check under " + my_curiosity + " tiles</p>");
+    }
+};
+
+check_tile = function (tile) {
+    if (tiles_checked < my_curiosity) {
+        tiles_checked = tiles_checked + 1;
+        name_of_tile = "#tile_" + tile;
+        if (tile == current_treasure_tile) {
+            name_of_image = '<img src="/static/images/treasure.png"/>';
+            $(name_of_tile).html(name_of_image);
+        } else {
+            name_of_image = '<img src="/static/images/no.png"/>';
+            $(name_of_tile).html(name_of_image);
+        }
+        if (tiles_checked == my_curiosity) {
+            prepare_for_decision();
+        }
+    }
+};
+
+prepare_for_decision = function () {
+
 };
 
 

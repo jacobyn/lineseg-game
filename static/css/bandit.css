@@ -1,0 +1,9 @@
+.tile_td {
+    width: 100px;
+    height: 100px;
+}
+
+.tile_table {
+    margin-left: auto; 
+    margin-right: auto;
+}
