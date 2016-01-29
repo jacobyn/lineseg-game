@@ -2,7 +2,7 @@
 
 from wallace.experiments import Experiment
 from wallace.nodes import Agent, Source
-# from wallace.models import Info, Node, Network
+from wallace.models import Info
 from wallace.networks import DiscreteGenerational
 from wallace.information import Gene
 from psiturk.models import Participant
@@ -27,8 +27,8 @@ class BanditGame(Experiment):
         # Wallace parameters
         self.task = "The Bandit Game"
         self.verbose = True
-        self.experiment_repeats = 21
-        self.practice_repeats = 3
+        self.experiment_repeats = 2
+        self.practice_repeats = 0
         self.agent = BanditAgent
         self.min_acceptable_performance = 0
         self.generation_size = 20
@@ -41,14 +41,17 @@ class BanditGame(Experiment):
                                   "instructions/instruct-2.html",
                                   "instructions/instruct-3.html"]
         self.debrief_pages = ["debriefing/debrief-1.html"]
+        self.known_classes["Pull"] = Pull
 
         # BanditGame parameters
-        self.n_trials = 10
+        self.n_trials = 2
         self.n_bandits = 5
         self.n_options = 10
         self.n_pulls = 10
-        self.f_min = 2
         self.memory_cost = 2
+        self.f_min = 2
+        self.f_scale_factor = 0.01
+        self.f_power_factor = 3
 
         if not self.networks():
             self.setup()
@@ -63,7 +66,7 @@ class BanditGame(Experiment):
                 b = Bandit(network=net)
                 b.bandit_id = bandit
                 b.num_tiles = self.n_options
-                b.treasure_tile = int(random.random()*self.n_options)
+                b.treasure_tile = int(random.random()*self.n_options) + 1
 
     def recruit(self):
         self.log("running recruit")
@@ -81,94 +84,6 @@ class BanditGame(Experiment):
         else:
             self.log("generation not finished, not recruiting")
 
-    # def submission_successful(self, participant):
-    #     # is this participant the final one in the generation?
-    #     participants = Participant.query.with_entities(Participant.status).all()
-    #     if len([p for p in participants if p.status == 101]) % self.generation_size == 0:
-    #         self.log("Participant was final in generation, working out everyone's payoff")
-
-    #         # if yes, work out what generation has just finished
-    #         generation = (CooperationAgent.query.
-    #                       filter_by(participant_id=participant.uniqueid).
-    #                       all())[0].generation
-    #         self.log("Generation to finish was {}".format(generation))
-    #         nodes = CooperationAgent.query.filter_by(generation=generation, failed=False).all()
-    #         nets = Network.query.all()
-
-    #         # first work out the payoffs for every decision
-    #         for net in nets:
-    #             levels = net.levels
-    #             nets_nodes = [n for n in nodes if n.network_id == net.id]
-    #             net_groups = set([n.group for n in nets_nodes])
-    #             for group in net_groups:
-    #                 group_nodes = [n for n in nets_nodes if n.group == group]
-    #                 decisions = Decision.query.filter(Decision.origin_id.in_([n.id for n in group_nodes])).all()
-
-    #                 level_1_decisions = [d for d in decisions if d.level == 1]
-    #                 num_cooperate_1 = sum([int(d.contents) for d in level_1_decisions])
-    #                 num_defect_1 = self.generation_size - num_cooperate_1
-    #                 if levels > 1:
-    #                     level_2_decisions = [d for d in decisions if d.level == 2]
-    #                     num_cooperate_2 = sum([int(d.contents) for d in level_2_decisions])
-    #                     num_defect_2 = self.generation_size - num_cooperate_2
-    #                 if levels > 2:
-    #                     level_3_decisions = [d for d in decisions if d.level == 3]
-    #                     num_cooperate_3 = sum([int(d.contents) for d in level_3_decisions])
-
-    #                 pot = num_cooperate_1*self.cost_of_cooperation*self.pot_multiplier
-    #                 share = pot/float(self.generation_size)
-
-    #                 for node in group_nodes:
-    #                     level_1_decision = [d for d in level_1_decisions if d.origin_id == node.id][0]
-    #                     l1d = int(level_1_decision.contents)
-    #                     if levels > 1:
-    #                         level_2_decision = [d for d in level_2_decisions if d.origin_id == node.id][0]
-    #                         l2d = int(level_2_decision.contents)
-    #                     if levels > 2:
-    #                         level_3_decision = [d for d in level_3_decisions if d.origin_id == node.id][0]
-    #                         l3d = int(level_3_decision.contents)
-    #                     if levels == 1:
-    #                         level_1_decision.payoff = share - l1d*self.cost_of_cooperation
-    #                     else:
-    #                         level_1_decision.payoff = (share - l1d*self.cost_of_cooperation -
-    #                                                    (1-l1d)*(num_cooperate_2 - l2d)*self.value_of_punishment)
-    #                         if levels == 2:
-    #                             level_2_decision.payoff = 0 - l2d*(num_defect_1 - (1-l1d))*self.cost_of_punishment
-    #                         else:
-    #                             level_2_decision.payoff = (0 - l2d*(num_defect_1 - (1-l1d))*self.cost_of_punishment -
-    #                                                        (1-l2d)*(num_cooperate_3 - l3d)*self.value_of_punishment)
-    #                             level_3_decision.payoff = 0 - l3d*(num_defect_2 - (1-l2d))*self.cost_of_punishment
-
-    #                     # use this to assign a score to every node
-    #                     if levels == 1:
-    #                         node.score = level_1_decision.payoff
-    #                     elif levels == 2:
-    #                         node.score = level_1_decision.payoff + level_2_decision.payoff
-    #                     elif levels == 3:
-    #                         node.score = level_1_decision.payoff + level_2_decision.payoff + level_3_decision.payoff
-
-    #             # at this point, prompt the Summary source in each network to make a new Summary
-    #             source = net.nodes(type=SummarySource)[0]
-    #             source.summarize(generation=generation)
-
-    #         # now get all the participants and pay them a bonus
-    #         p_ids = set([n.participant_id for n in nodes])
-    #         participants = Participant.query.filter(Participant.uniqueid.in_(p_ids)).all()
-    #         for p in participants:
-    #             p_nodes = [n for n in nodes if n.participant_id == p.uniqueid]
-    #             score = sum([n.score for n in p_nodes])
-    #             bonus = score/100
-    #             if bonus < 0:
-    #                 bonus = 0
-    #             elif bonus > self.bonus_payment:
-    #                 bonus = self.bonus_payment
-    #             p.bonus = bonus
-    #             if self.contactAWS:
-    #                 self.recruiter().reward_bonus(
-    #                     participant.assignmentid,
-    #                     bonus,
-    #                     self.bonus_reason())
-
     def data_check(self, participant):
         ### This needs to be written! ###
 
@@ -185,10 +100,6 @@ class BanditGenerational(DiscreteGenerational):
         num_agents = len(agents)
         current_generation = int((num_agents-1)/float(self.generation_size))
         node.generation = current_generation
-
-        # current_generation_size = len([a for a in agents if a.generation == current_generation])
-        # current_group = int((current_generation_size-1)/float(self.group_size))
-        # node.group = current_group
 
         if current_generation == 0:
             source = GeneticSource.query.filter_by(network_id=self.id).one()
@@ -226,7 +137,7 @@ class GeneticSource(Source):
     __mapper_args__ = {"polymorphic_identity": "genetic_source"}
 
     def create_genes(self):
-        MemoryGene(origin=self, contents=0)
+        MemoryGene(origin=self, contents=1)
         CuriosityGene(origin=self, contents=1)
 
 
@@ -272,92 +183,6 @@ class Bandit(Source):
         return cast(self.property3, Integer)
 
 
-
-# class SummarySource(Source):
-#     """" A source that makes summaries of a generation """
-
-#     __mapper_args__ = {"polymorphic_identity": "summary_source"}
-
-#     def send_summary(self, to_whom):
-
-#         summary = Summary.query.filter_by(origin_id=self.id, generation=to_whom.generation-1, group=to_whom.group).one()
-#         self.transmit(what=summary, to_whom=to_whom)
-
-#     def summarize(self, generation):
-#         agents = CooperationAgent.query.filter_by(network_id=self.network_id, generation=generation, failed=False).all()
-#         groups = set([a.group for a in agents])
-#         net = self.network
-#         levels = net.levels
-
-#         for g in groups:
-#             group_agents = [a for a in agents if a.group == g]
-#             group_size = len(group_agents)
-#             agent_ids = [a.id for a in agents]
-#             decisions = Decision.query.filter(Decision.origin_id.in_(agent_ids)).all()
-
-#             level_1_decisions = [d for d in decisions if d.level == 1]
-#             num_cooperate_1 = sum([int(d.contents) for d in level_1_decisions])
-#             num_defect_1 = group_size - num_cooperate_1
-#             if levels > 1:
-#                 level_2_decisions = [d for d in decisions if d.level == 2]
-#                 num_cooperate_2 = sum([int(d.contents) for d in level_2_decisions])
-#                 num_defect_2 = group_size - num_cooperate_2
-#             else:
-#                 num_cooperate_2 = 0
-#                 num_defect_2 = 0
-#             if levels > 2:
-#                 level_3_decisions = [d for d in decisions if d.level == 3]
-#                 num_cooperate_3 = sum([int(d.contents) for d in level_3_decisions])
-#                 num_defect_3 = group_size - num_cooperate_3
-#             else:
-#                 num_cooperate_3 = 0
-#                 num_defect_3 = 0
-
-#             try:
-#                 payoff_cooperate_1 = sum([d.payoff for d in level_1_decisions if int(d.contents) == 1])/float(num_cooperate_1)
-#             except:
-#                 payoff_cooperate_1 = None
-#             try:
-#                 payoff_defect_1 = sum([d.payoff for d in level_1_decisions if int(d.contents) == 0])/float(num_defect_1)
-#             except:
-#                 payoff_defect_1 = None
-#             try:
-#                 payoff_cooperate_2 = sum([d.payoff for d in level_2_decisions if int(d.contents) == 1])/float(num_cooperate_2)
-#             except:
-#                 payoff_cooperate_2 = None
-#             try:
-#                 payoff_defect_2 = sum([d.payoff for d in level_2_decisions if int(d.contents) == 0])/float(num_defect_2)
-#             except:
-#                 payoff_defect_2 = None
-#             try:
-#                 payoff_cooperate_3 = sum([d.payoff for d in level_3_decisions if int(d.contents) == 1])/float(num_cooperate_3)
-#             except:
-#                 payoff_cooperate_3 = None
-#             try:
-#                 payoff_defect_3 = sum([d.payoff for d in level_3_decisions if int(d.contents) == 0])/float(num_defect_3)
-#             except:
-#                 payoff_defect_3 = None
-
-#             contents = {
-#                 "num_cooperate_1": num_cooperate_1,
-#                 "num_defect_1": num_defect_1,
-#                 "num_cooperate_2": num_cooperate_2,
-#                 "num_defect_2": num_defect_2,
-#                 "num_cooperate_3": num_cooperate_3,
-#                 "num_defect_3": num_defect_3,
-#                 "payoff_cooperate_1": payoff_cooperate_1,
-#                 "payoff_defect_1": payoff_defect_1,
-#                 "payoff_cooperate_2": payoff_cooperate_2,
-#                 "payoff_defect_2": payoff_defect_2,
-#                 "payoff_cooperate_3": payoff_cooperate_3,
-#                 "payoff_defect_3": payoff_defect_3,
-#             }
-
-#             summary = Summary(origin=self, contents=dumps(contents))
-#             summary.generation = generation
-#             summary.group = g
-
-
 class MemoryGene(Gene):
     """ A gene that controls the time span of your memory """
 
@@ -377,68 +202,52 @@ class CuriosityGene(Gene):
 
     def _mutated_contents(self):
         if random.random() < 0.5:
-            return min([max([int(self.contents) + random.sample([-1, 1], 1)[0], 0]), 40])
+            return min([max([int(self.contents) + random.sample([-1, 1], 1)[0], 1]), 10])
         else:
             return self.contents
 
 
-# class Summary(Info):
-#     """ A summary summarizes a generation of Agents """
+class Pull(Info):
+    """ An info representing a pull on the arm of a bandit """
 
-#     __mapper_args__ = {"polymorphic_identity": "summary"}
+    __mapper_args__ = {"polymorphic_identity": "pull"}
 
-#     @hybrid_property
-#     def generation(self):
-#         return int(self.property1)
+    @hybrid_property
+    def check(self):
+        return self.property1
 
-#     @generation.setter
-#     def generation(self, generation):
-#         self.property1 = repr(generation)
+    @check.setter
+    def check(self, check):
+        self.property1 = check
 
-#     @generation.expression
-#     def generation(self):
-#         return cast(self.property1, Integer)
+    @check.expression
+    def check(self):
+        return self.property1
 
-#     @hybrid_property
-#     def group(self):
-#         return int(self.property2)
+    @hybrid_property
+    def bandit_id(self):
+        return int(self.property2)
 
-#     @group.setter
-#     def group(self, group):
-#         self.property2 = repr(group)
+    @bandit_id.setter
+    def bandit_id(self, bandit_id):
+        self.property2 = repr(bandit_id)
 
-#     @group.expression
-#     def group(self):
-#         return cast(self.property2, Integer)
+    @bandit_id.expression
+    def bandit_id(self):
+        return cast(self.property2, Integer)
 
+    @hybrid_property
+    def remembered(self):
+        return self.property3
 
-# class Decision(Info):
+    @remembered.setter
+    def remembered(self, remembered):
+        self.property3 = remembered
 
-#     __mapper_args__ = {"polymorphic_identity": "decision"}
+    @remembered.expression
+    def remembered(self):
+        return self.property3
 
-#     @hybrid_property
-#     def level(self):
-#         return int(self.property1)
-
-#     @level.setter
-#     def level(self, level):
-#         self.property1 = repr(level)
-
-#     @level.expression
-#     def level(self):
-#         return cast(self.property1, Integer)
-
-#     @hybrid_property
-#     def payoff(self):
-#         return float(self.property2)
-
-#     @payoff.setter
-#     def payoff(self, payoff):
-#         self.property2 = repr(payoff)
-
-#     @payoff.expression
-#     def payoff(self):
-#         return cast(self.property2, Float)
 
 class BanditAgent(Agent):
 
@@ -449,47 +258,26 @@ class BanditAgent(Agent):
             if isinstance(info, Gene):
                 self.mutate(info_in=info)
 
+    def calculate_fitness(self):
+        exp = BanditGame(db.session)
 
+        my_decisions = Pull.query.filter_by(origin_id=self.id, check="false").all()
+        bandits = Bandit.query.filter_by(network_id=self.network_id).all()
 
-# class CooperationAgent(Agent):
+        pulls = exp.n_pulls
+        curiosity = int(self.infos(type=CuriosityGene)[0].contents)
+        memory = int(self.infos(type=MemoryGene)[0].contents)
 
-#     __mapper_args__ = {"polymorphic_identity": "cooperation_agent"}
+        fitness = exp.f_min - memory*exp.memory_cost
 
-#     @hybrid_property
-#     def generation(self):
-#         return int(self.property2)
+        for d in my_decisions:
+            bandit = [b for b in bandits if b.bandit_id == d.bandit_id][0]
+            if int(d.contents) == bandit.treasure_tile:
+                fitness = fitness + (pulls-curiosity)
 
-#     @generation.setter
-#     def generation(self, generation):
-#         self.property2 = repr(generation)
-
-#     @generation.expression
-#     def generation(self):
-#         return cast(self.property2, Integer)
-
-#     @hybrid_property
-#     def score(self):
-#         return float(self.property3)
-
-#     @score.setter
-#     def score(self, score):
-#         self.property3 = repr(score)
-
-#     @score.expression
-#     def score(self):
-#         return cast(self.property3, Float)
-
-#     @hybrid_property
-#     def group(self):
-#         return int(self.property4)
-
-#     @group.setter
-#     def group(self, group):
-#         self.property4 = repr(group)
-
-#     @group.expression
-#     def group(self):
-#         return cast(self.property4, Integer)
+        fitness = max([fitness, 0])
+        fitness = ((1.0*fitness)*exp.f_scale_factor)**exp.f_power_factor
+        self.fitness = fitness
 
 
 extra_routes = Blueprint(
@@ -498,22 +286,22 @@ extra_routes = Blueprint(
     static_folder='static')
 
 
-# @extra_routes.route("/node/<int:node_id>/calculate_fitness", methods=["GET"])
-# def calculate_fitness(node_id):
+@extra_routes.route("/node/<int:node_id>/calculate_fitness", methods=["GET"])
+def calculate_fitness(node_id):
 
-#     exp = CooperationGame(db.session)
-#     node = CooperationGame.query.get(node_id)
-#     if node is None:
-#         exp.log("Error: /node/{}/calculate_fitness, node {} does not exist".format(node_id))
-#         page = exp.error_page(error_type="/node/calculate_fitness, node does not exist")
-#         js = dumps({"status": "error", "html": page})
-#         return Response(js, status=400, mimetype='application/json')
+    exp = BanditGame(db.session)
+    node = BanditAgent.query.get(node_id)
+    if node is None:
+        exp.log("Error: /node/{}/calculate_fitness, node {} does not exist".format(node_id))
+        page = exp.error_page(error_type="/node/calculate_fitness, node does not exist")
+        js = dumps({"status": "error", "html": page})
+        return Response(js, status=400, mimetype='application/json')
 
-#     node.calculate_fitness()
-#     exp.save()
+    node.calculate_fitness()
+    exp.save()
 
-#     data = {"status": "success"}
-#     return Response(dumps(data), status=200, mimetype='application/json')
+    data = {"status": "success"}
+    return Response(dumps(data), status=200, mimetype='application/json')
 
 
 @extra_routes.route("/num_trials", methods=["GET"])
@@ -610,42 +398,6 @@ def ad_address(mode, hit_id):
     else:
         raise ValueError("Unknown mode: {}".format(mode))
     return Response(dumps({"address": address}), status=200)
-
-
-# @extra_routes.route("/info/<int:node_id>/<int:level>", methods=["POST"])
-# def info_post(node_id, level):
-#     exp = BanditGame(db.session)
-
-#     # get the parameters
-#     info_type = Decision
-
-#     contents = request_parameter(request=request, parameter="contents")
-#     if type(contents) == Response:
-#         return contents
-
-#     exp.log("/info/level POST request. Params: node_id: {}, info_type: {}, \
-#              contents: {}, level: {}"
-#             .format(node_id, info_type, contents, level))
-
-#     # check the node exists
-#     node = Node.query.get(node_id)
-#     if node is None:
-#         exp.log("Error: /info/{} POST, node does not exist".format(node_id))
-#         page = error_page(error_type="/info POST, node does not exist")
-#         js = dumps({"status": "error", "html": page})
-#         return Response(js, status=400, mimetype='application/json')
-
-#     # execute the request
-#     info = info_type(origin=node, contents=contents)
-#     info.level = level
-#     exp.save()
-
-#     # return the data
-#     data = info.__json__()
-#     data = {"status": "success", "info": data}
-#     exp.log("/info POST request successful.")
-#     js = dumps(data, default=date_handler)
-#     return Response(js, status=200, mimetype='application/json')
 
 
 def return_page(page, request):
