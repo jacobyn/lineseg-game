@@ -4,8 +4,8 @@ mode = sandbox
 auto_recruit = false
 
 [HIT Configuration]
-title = Cooperate or Defect
-description = Choose whether or not to contribute to a common pool, you can optionally punish others
+title = Treasure tiles
+description = Look for treasure under tiles, try to remember where it is
 amt_keywords = Psychology, cooperation, punishement
 base_payment = 1.00
 lifetime = 24
