@@ -134,8 +134,8 @@ class BanditGame(Experiment):
             # 0 checks if remembered, otherwise "curiosity" checks
             for node in nodes:
                 curiosity = int([g for g in genes if g.origin_id == node.id and g.type == "curiosity_gene"][0].contents)
-                decisions = [d for d in decisions if d.origin_id == node.id and d.check == "false"]
-                for decision in decisions:
+                final_decisions = [d for d in decisions if d.origin_id == node.id and d.check == "false"]
+                for decision in final_decisions:
                     if decision.remembered == "true":
                         assert (len([d for d in decisions if d.origin_id == node.id and d.check == "true" and d.bandit_id == decision.bandit_id])) == 0
                     else:
