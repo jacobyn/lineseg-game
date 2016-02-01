@@ -2,7 +2,7 @@
 
 from wallace.experiments import Experiment
 from wallace.nodes import Agent, Source
-from wallace.models import Info
+from wallace.models import Info, Network, Vector
 from wallace.networks import DiscreteGenerational
 from wallace.information import Gene
 from psiturk.models import Participant
@@ -94,17 +94,67 @@ class BanditGame(Experiment):
             self.log("generation not finished, not recruiting")
 
     def data_check(self, participant):
-        ### This needs to be written! ###
 
-        self.log("Data check passed")
-        return True
+        # get the necessary data
+        networks = Network.query.all()
+        nodes = BanditAgent.query.filter_by(participant_id=participant.uniqueid).all()
+        node_ids = [n.id for n in nodes]
+        genes = Gene.query.filter(Gene.origin_id.in_(node_ids)).all()
+        incoming_vectors = Vector.query.filter(Vector.destination_id.in_(node_ids)).all()
+        outgoing_vectors = Vector.query.filter(Vector.origin_id.in_(node_ids)).all()
+        decisions = Pull.query.filter(Pull.origin_id.in_(node_ids)).all()
+
+        try:
+            # 1 node per network
+            for net in networks:
+                assert len([n for n in nodes if n.network_id == net.id]) == 1
+
+            # 1 curiosity and memory gene per node
+            for node in nodes:
+                assert len([g for g in genes if g.origin_id == node.id]) == 2
+                assert len([g for g in genes if g.origin_id == node.id and g.type == "memory_gene"]) == 1
+                assert len([g for g in genes if g.origin_id == node.id and g.type == "curiosity_gene"]) == 1
+
+            # 1 vector (incoming) per node
+            for node in nodes:
+                assert len([v for v in outgoing_vectors if v.origin_id == node.id]) == 0
+                assert len([v for v in incoming_vectors if v.destination_id == node.id]) == 1
+
+            # n_trials decision per node
+            for node in nodes:
+                assert (len([d for d in decisions if d.origin_id == node.id and d.check == "false"])) == self.n_trials
+
+            # 0 checks if remembered, otherwise "curiosity" checks
+            for node in nodes:
+                curiosity = int([g for g in genes if g.origin_id == node.id and g.type == "curiosity_gene"][0].contents)
+                decisions = [d for d in decisions if d.origin_id == node.id and d.check == "false"]
+                for decision in decisions:
+                    if decision.remembered == "true":
+                        assert (len([d for d in decisions if d.origin_id == node.id and d.check == "true" and d.bandit_id == decision.bandit_id])) == 0
+                    else:
+                        assert (len([d for d in decisions if d.origin_id == node.id and d.check == "true" and d.bandit_id == decision.bandit_id])) == curiosity
+
+            # all decisions have an int payoff
+            for d in decisions:
+                if d.check == "false":
+                    assert isinstance(int(d.contents), int)
+
+            self.log("Data check passed")
+            return True
+        except:
+            return False
 
     def bonus(self, participant):
         total_score = 0
         total_potential_score = 0
 
+        # get the non-practice networks:
+        networks = Network.query.all()
+        networks_ids = [n.id for n in networks if n.role != "practice"]
+
         # query all nodes, bandits, pulls and Genes
         nodes = BanditAgent.query.filter_by(participant_id=participant.uniqueid).all()
+        nodes = [n for n in nodes if n.network_id in networks_ids]
         bandits = Bandit.query.all()
         node_ids = [n.id for n in nodes]
         pulls = Pull.query.filter(Pull.origin_id.in_(node_ids)).all()
