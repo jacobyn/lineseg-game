@@ -38,7 +38,9 @@ class BanditGame(Experiment):
         self.initial_recruitment_size = self.generation_size
         self.instruction_pages = ["instructions/instruct-1.html",
                                   "instructions/instruct-2.html",
-                                  "instructions/instruct-3.html"]
+                                  "instructions/instruct-3.html",
+                                  "instructions/instruct-4.html",
+                                  "instructions/instruct-5.html"]
         self.debrief_pages = ["debriefing/debrief-1.html"]
         self.known_classes["Pull"] = Pull
 
@@ -47,7 +49,7 @@ class BanditGame(Experiment):
         self.n_trials = 2
 
         # how many bandits there are
-        self.n_bandits = 1
+        self.n_bandits = 5
 
         # how many arms each bandit has
         self.n_options = 10
@@ -65,7 +67,7 @@ class BanditGame(Experiment):
 
         # seed parameters
         self.seed_memory = 1
-        self.seed_curiosity = 1
+        self.seed_curiosity = 5
 
         if not self.networks():
             self.setup()
@@ -151,7 +153,6 @@ class BanditGame(Experiment):
 
     def bonus(self, participant):
         total_score = 0
-        total_potential_score = 0
 
         # get the non-practice networks:
         networks = Network.query.all()
@@ -175,24 +176,21 @@ class BanditGame(Experiment):
                 bandit = [b for b in bandits if b.network_id == node.network_id and b.bandit_id == decision.bandit_id][0]
                 right_answer = bandit.treasure_tile
 
-                # work out the possible score
-                if decision.remembered == "true":
-                    potential_score = self.n_pulls
-                else:
-                    potential_score = (self.n_pulls - curiosity)
-
                 # if they get it right score = potential score
                 if right_answer == int(decision.contents):
-                    score = potential_score
+                    score = self.n_pulls - curiosity
                 else:
                     score = 0
 
                 # save this info the the decision and update the running totals
                 decision.payoff = score
                 total_score += score
-                total_potential_score += potential_score
 
-        return max(min((total_score/(1.0*total_potential_score))*self.bonus_payment, 1.0), 0.0)
+        total_trials = self.n_trials * self.experiment_repeats
+
+        bonus = (total_score/(1.0*total_trials))/5.0
+
+        return max(min(bonus, 1.0), 0.0)*self.bonus_payment
 
 
 class BanditGenerational(DiscreteGenerational):
