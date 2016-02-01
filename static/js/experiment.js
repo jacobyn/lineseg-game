@@ -4,6 +4,9 @@ var trials_per_network;
 var trial_in_this_network = 0;
 var round_number = 0;
 var number_of_rounds;
+var all_possible_bandit_names = ["England", "Northern Ireland", "France", "Spain", "Portugal", "Germany", "Austria", "Poland", "Romania", "Ireland", "Italy", "Croatia", "Albania", "Bulgaria", "Morocco", "Libya", "Tunisia", "Egypt", "Iran", "Scotland", "Greece", "Turkey", "Sierra Leone", "Ghana", "Nigeria", "Mali", "Congo", "Ethiopia", "Chad", "Wales", "India", "Bangldesh", "Pakistan", "Afghanistan", "Australia", "New Zealand", "Tonga", "Papua New Guinea", "Fiji", "Thailand", "Laos", "Myanmar", "China", "Japan", "South Korea", "Mongolia", "Turkmenistan", "The United States", "Canada", "Greenland", "Mexico", "Guatemala", "Colombia", "Sri Lanka", "Brasil", "Argentina", "Chile", "Russia", "Ukraine", "Sweden", "Norway", "Finland", "Denmark", "Belgium", "Holland"];
+var available_bandit_names;
+var bandit_names;
 
 // get all the details to correctly present the trial number bar
 get_num_trials = function() {
@@ -29,6 +32,7 @@ create_agent = function() {
             trial_in_this_network = 0;
             my_node_id = resp.node.id;
             my_network_id = resp.node.network_id;
+            bandit_memory = [];
             get_genes();
         },
         error: function (err) {
@@ -76,6 +80,11 @@ get_num_bandits = function() {
         type: 'json',
         success: function (resp) {
             num_bandits = resp.num_bandits;
+            bandit_names = [];
+            available_bandit_names = all_possible_bandit_names;
+            for (i = 0; i < num_bandits; i++) {
+                bandit_names.push("a");
+            }
             pick_a_bandit();
         }
     });
@@ -84,6 +93,16 @@ get_num_bandits = function() {
 // pick my current bandit
 pick_a_bandit = function () {
     current_bandit = Math.floor(Math.random()*num_bandits);
+
+    remember_bandit = ($.inArray(current_bandit, bandit_memory.slice(bandit_memory.length - my_memory, bandit_memory.length)) > (-1));
+
+    if (remember_bandit === false) {
+        index = Math.floor(Math.random()*available_bandit_names.length);
+        bandit_names[current_bandit] = available_bandit_names[index];
+        available_bandit_names.splice(index, 1);
+    }
+
+    current_bandit_name = bandit_names[current_bandit];
     get_num_tiles();
 };
 
@@ -119,12 +138,19 @@ prepare_for_trial = function() {
     prepare_trial_info_text();
 
     tiles_checked = 0;
-    for (i = 0; i < num_tiles; i++) {
-        name_of_tile = "#tile_" + (i+1);
-        name_of_image = '<img src="/static/images/tile_' + (i+1) + '.png" onClick="check_tile(' + (i+1) + ')"/>';
-        $(name_of_tile).html(name_of_image);
-        $("#mini_title").html("<p>you are at bandit " + current_bandit + "</p>");
-        $("#instructions").html("<p>You can check under " + my_curiosity + " tiles</p>");
+    if (remember_bandit === false) {
+        for (i = 0; i < num_tiles; i++) {
+            name_of_tile = "#tile_" + (i+1);
+            name_of_image = '<img src="/static/images/tile_' + (i+1) + '.png" onClick="check_tile(' + (i+1) + ')"/>';
+            $(name_of_tile).html(name_of_image);
+        }
+        $("#mini_title").html("<p>You are looking for treasure in " + current_bandit_name + "</p>");
+        $("#instructions").html("<p>You can check under " + my_curiosity + " tiles<br><br></p>");
+    } else {
+        $("#mini_title").html("<p>You are looking for treasure in " + current_bandit_name + " again</p>");
+        $("#instructions").html("<p>You have been here before so you cannot check under any more tiles.<br>Instead try to remember what you learned the last time you were here.<br>Please make your final choice of tile.</p>");
+        setTimeout(function() {prepare_for_decision();}, 2000);
+        
     }
 };
 
@@ -147,7 +173,7 @@ check_tile = function (tile) {
                 info_type: "Pull",
                 property1: true, // check
                 property2: current_bandit, // bandit_id
-                property3: true // remembered
+                property3: remember_bandit // remembered
             },
         });
         tiles_checked = tiles_checked + 1;
@@ -160,7 +186,7 @@ check_tile = function (tile) {
             $(name_of_tile).html(name_of_image);
         }
         if (tiles_checked == my_curiosity) {
-            $("#instructions").html("<p>Please wait...");
+            $("#instructions").html("<p>Please wait...<br><br>");
             setTimeout(function() {
                 prepare_for_decision();
             }, 2000);
@@ -171,7 +197,9 @@ check_tile = function (tile) {
 // prepare the tiles for the final decision
 prepare_for_decision = function () {
     decided = false;
-    $("#instructions").html("<p>Please make your final choice of tile.</p>");
+    if (remember_bandit === false) {
+        $("#instructions").html("<p>Please make your final choice of tile.<br><br></p>");
+    }
     for (i = 0; i < num_tiles; i++) {
         name_of_tile = "#tile_" + (i+1);
         name_of_image = '<img src="/static/images/tile_' + (i+1) + '.png" onClick="choose_tile(' + (i+1) + ')"/>';
@@ -183,7 +211,8 @@ prepare_for_decision = function () {
 choose_tile = function (tile) {
     if (decided === false) {
         decided = true;
-        $("#instructions").html("<p>Your decision is being saved, please wait...</p>");
+        $("#instructions").html("<p>Your decision is being saved, please wait...<br><br></p>");
+        bandit_memory.push(current_bandit);
         reqwest({
             url: "/info/" + my_node_id,
             method: 'post',
@@ -193,7 +222,7 @@ choose_tile = function (tile) {
                 info_type: "Pull",
                 property1: false, // check
                 property2: current_bandit, // bandit_id
-                property3: true // remembered
+                property3: remember_bandit // remembered
             },
         });
         name_of_tile = "#tile_" + tile;
@@ -217,8 +246,30 @@ advance_to_next_trial = function () {
                 $('body').html(err_response.html);
             }
         });
+        show_warning();
         create_agent();
     } else {
+        travel();
         pick_a_bandit();
     }
+};
+
+travel = function () {
+    $("#table_div").hide();
+    $("#warning_div").hide();
+    $("#travel_div").show();
+    setTimeout(function() {
+        $("#travel_div").hide();
+        $("#table_div").show();
+    }, 2500);
+};
+
+show_warning = function () {
+    $("#table_div").hide();
+    $("#travel_div").hide();
+    $("#warning_div").show();
+    setTimeout(function() {
+        $("#warning_div").hide();
+        $("#table_div").show();
+    }, 3500);
 };

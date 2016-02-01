@@ -24,7 +24,7 @@ class BanditGame(Experiment):
     def __init__(self, session):
         super(BanditGame, self).__init__(session)
 
-        # Wallace parameters
+        """ Wallace parameters """
         self.task = "The Bandit Game"
         self.verbose = True
         self.experiment_repeats = 2
@@ -35,7 +35,7 @@ class BanditGame(Experiment):
         self.network = lambda: BanditGenerational(generations=40,
                                                   generation_size=self.generation_size,
                                                   initial_source=False)
-        self.bonus_payment = 0
+        self.bonus_payment = 1.0
         self.initial_recruitment_size = self.generation_size
         self.instruction_pages = ["instructions/instruct-1.html",
                                   "instructions/instruct-2.html",
@@ -43,15 +43,24 @@ class BanditGame(Experiment):
         self.debrief_pages = ["debriefing/debrief-1.html"]
         self.known_classes["Pull"] = Pull
 
-        # BanditGame parameters
+        """ BanditGame parameters """
+        # how many bandits each node visits
         self.n_trials = 2
-        self.n_bandits = 5
+        # how many bandits there are
+        self.n_bandits = 1
+        # how many arms each bandit has
         self.n_options = 10
+        # how many times you can pull the arms
         self.n_pulls = 10
+        # how much each unit of memory costs fitness
         self.memory_cost = 2
+        # fitness affecting parameters
         self.f_min = 2
         self.f_scale_factor = 0.01
         self.f_power_factor = 3
+        # seed parameters
+        self.seed_memory = 1
+        self.seed_curiosity = 1
 
         if not self.networks():
             self.setup()
@@ -89,6 +98,46 @@ class BanditGame(Experiment):
 
         self.log("Data check passed")
         return True
+
+    def bonus(self, participant):
+        total_score = 0
+        total_potential_score = 0
+
+        # query all nodes, bandits, pulls and Genes
+        nodes = BanditAgent.query.filter_by(participant_id=participant.uniqueid).all()
+        bandits = Bandit.query.all()
+        node_ids = [n.id for n in nodes]
+        pulls = Pull.query.filter(Pull.origin_id.in_(node_ids)).all()
+        curiosity_genes = CuriosityGene.query.filter(Gene.origin_id.in_(node_ids)).all()
+
+        for node in nodes:
+            # for every node get its curiosity and decisions
+            curiosity = int([g for g in curiosity_genes if g.origin_id == node.id][0].contents)
+            decisions = [p for p in pulls if p.origin_id == node.id and p.check == "false"]
+
+            for decision in decisions:
+                # for each decision, get the bandit and the right answer
+                bandit = [b for b in bandits if b.network_id == node.network_id and b.bandit_id == decision.bandit_id][0]
+                right_answer = bandit.treasure_tile
+
+                # work out the possible score
+                if decision.remembered == "true":
+                    potential_score = self.n_pulls
+                else:
+                    potential_score = (self.n_pulls - curiosity)
+
+                # if they get it right score = potential score
+                if right_answer == int(decision.contents):
+                    score = potential_score
+                else:
+                    score = 0
+
+                # save this info the the decision and update the running totals
+                decision.payoff = score
+                total_score += score
+                total_potential_score += potential_score
+
+        return max(min((total_score/(1.0*total_potential_score))*self.bonus_payment, 1.0), 0.0)
 
 
 class BanditGenerational(DiscreteGenerational):
@@ -137,8 +186,9 @@ class GeneticSource(Source):
     __mapper_args__ = {"polymorphic_identity": "genetic_source"}
 
     def create_genes(self):
-        MemoryGene(origin=self, contents=1)
-        CuriosityGene(origin=self, contents=1)
+        exp = BanditGame(db.session)
+        MemoryGene(origin=self, contents=exp.seed_memory)
+        CuriosityGene(origin=self, contents=exp.seed_curiosity)
 
 
 class Bandit(Source):
@@ -247,6 +297,18 @@ class Pull(Info):
     @remembered.expression
     def remembered(self):
         return self.property3
+
+    @hybrid_property
+    def payoff(self):
+        return int(self.property4)
+
+    @payoff.setter
+    def payoff(self, payoff):
+        self.property4 = repr(payoff)
+
+    @payoff.expression
+    def payoff(self):
+        return cast(self.property4, Integer)
 
 
 class BanditAgent(Agent):
