@@ -4,7 +4,7 @@ var trials_per_network;
 var trial_in_this_network = 0;
 var round_number = 0;
 var number_of_rounds;
-var all_possible_bandit_names = ["England", "Northern Ireland", "France", "Spain", "Portugal", "Germany", "Austria", "Poland", "Romania", "Ireland", "Italy", "Croatia", "Albania", "Bulgaria", "Morocco", "Libya", "Tunisia", "Egypt", "Iran", "Scotland", "Greece", "Turkey", "Sierra Leone", "Ghana", "Nigeria", "Mali", "Congo", "Ethiopia", "Chad", "Wales", "India", "Bangldesh", "Pakistan", "Afghanistan", "Australia", "New Zealand", "Tonga", "Papua New Guinea", "Fiji", "Thailand", "Laos", "Myanmar", "China", "Japan", "South Korea", "Mongolia", "Turkmenistan", "The United States", "Canada", "Greenland", "Mexico", "Guatemala", "Colombia", "Sri Lanka", "Brasil", "Argentina", "Chile", "Russia", "Ukraine", "Sweden", "Norway", "Finland", "Denmark", "Belgium", "Holland"];
+var all_possible_bandit_names = ["England", "Northern Ireland", "France", "Spain", "Portugal", "Germany", "Austria", "Poland", "Romania", "Ireland", "Italy", "Croatia", "Albania", "Bulgaria", "Morocco", "Libya", "Tunisia", "Egypt", "Iran", "Scotland", "Greece", "Turkey", "Sierra Leone", "Ghana", "Nigeria", "Mali", "Congo", "Ethiopia", "Chad", "Wales", "India", "Bangladesh", "Pakistan", "Afghanistan", "Australia", "New Zealand", "Tonga", "Papua New Guinea", "Fiji", "Thailand", "Laos", "Myanmar", "China", "Japan", "South Korea", "Mongolia", "Turkmenistan", "The United States", "Canada", "Greenland", "Mexico", "Guatemala", "Colombia", "Sri Lanka", "Brasil", "Argentina", "Chile", "Russia", "Ukraine", "Sweden", "Norway", "Finland", "Denmark", "Belgium", "Holland"];
 var available_bandit_names;
 var bandit_names;
 

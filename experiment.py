@@ -67,7 +67,7 @@ class BanditGame(Experiment):
 
         # seed parameters
         self.seed_memory = 1
-        self.seed_curiosity = 5
+        self.seed_curiosity = 1
 
         if not self.networks():
             self.setup()
@@ -149,6 +149,8 @@ class BanditGame(Experiment):
             self.log("Data check passed")
             return True
         except:
+            import traceback
+            traceback.print_exc()
             return False
 
     def bonus(self, participant):
@@ -229,8 +231,8 @@ class BanditGenerational(DiscreteGenerational):
 
         node.receive()
 
-        bandits = Bandit.query.filter_by(network_id=self.id).all()
-        node.connect(whom=bandits, direction="from")
+        # bandits = Bandit.query.filter_by(network_id=self.id).all()
+        # node.connect(whom=bandits, direction="from")
 
 
 class GeneticSource(Source):
