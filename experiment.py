@@ -30,7 +30,6 @@ class BanditGame(Experiment):
         self.experiment_repeats = 2
         self.practice_repeats = 0
         self.agent = BanditAgent
-        self.min_acceptable_performance = 0
         self.generation_size = 20
         self.network = lambda: BanditGenerational(generations=40,
                                                   generation_size=self.generation_size,
@@ -46,18 +45,24 @@ class BanditGame(Experiment):
         """ BanditGame parameters """
         # how many bandits each node visits
         self.n_trials = 2
+
         # how many bandits there are
         self.n_bandits = 1
+
         # how many arms each bandit has
         self.n_options = 10
+
         # how many times you can pull the arms
         self.n_pulls = 10
+
         # how much each unit of memory costs fitness
         self.memory_cost = 2
+
         # fitness affecting parameters
         self.f_min = 2
         self.f_scale_factor = 0.01
         self.f_power_factor = 3
+
         # seed parameters
         self.seed_memory = 1
         self.seed_curiosity = 1
