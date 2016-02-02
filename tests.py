@@ -3,8 +3,9 @@ import sys
 from wallace import db
 from wallace.nodes import Agent, Source
 from wallace.information import Gene, Meme
+from wallace.transformations import Mutation
 from wallace import models
-from experiment import BanditGame, MemoryGene, CuriosityGene, Pull
+from experiment import BanditGame, MemoryGene, CuriosityGene, Pull, GeneticSource, Bandit, BanditAgent
 import random
 import traceback
 from datetime import datetime
@@ -289,168 +290,170 @@ class TestBandits(object):
             TEST NODES
             """
 
-            # print("Testing nodes...", end="\r")
-            # sys.stdout.flush()
+            print("Testing nodes...", end="\r")
+            sys.stdout.flush()
 
-            # for network in exp.networks():
+            for network in exp.networks():
 
-            #     allowed_groups = range(int(math.ceil(network.generation_size/float(network.group_size))))
+                agents = network.nodes(type=Agent)
+                assert len(agents) == network.max_size
+                for generation in range(network.generations):
+                    assert len([a for a in agents if a.generation == generation]) == network.generation_size
 
-            #     agents = network.nodes(type=Agent)
-            #     assert len(agents) == network.max_size
-            #     for generation in range(network.generations):
-            #         assert len([a for a in agents if a.generation == generation]) == network.generation_size
-            #         for group in allowed_groups:
-            #             assert len([a for a in agents if a.generation == generation and a.group == group]) == network.group_size
+                sources = network.nodes(type=Source)
+                assert len(sources) == 1 + exp.n_bandits
+                genetic_source = network.nodes(type=GeneticSource)
+                assert len(genetic_source) == 1
+                bandits = network.nodes(type=Bandit)
+                assert len(bandits) == exp.n_bandits
 
-            #     sources = network.nodes(type=Source)
-            #     assert len(sources) == 1
-            #     summary_source = network.nodes(type=SummarySource)
-            #     assert len(summary_source) == 1
+                genetic_source = genetic_source[0]
 
-            #     summary_source = summary_source[0]
+                for agent in agents:
+                    assert type(agent) == BanditAgent
 
-            #     vectors = network.vectors()
+            print("Testing nodes...                     done!")
+            sys.stdout.flush()
 
-            #     for agent in agents:
-            #         assert type(agent) == CooperationAgent
+            """
+            TEST VECTORS
+            """
 
-            #     for agent in agents:
-            #         if agent.generation == 0:
-            #             assert len(agent.vectors(direction="incoming")) == 0
-            #         else:
-            #             assert len(agent.vectors(direction="incoming")) == 1
-            #             assert agent.is_connected(direction="from", whom=summary_source)
-            #             assert len(agent.neighbors(type=CooperationAgent, connection="from")) == 0
+            print("Testing vectors...", end="\r")
+            sys.stdout.flush()
 
-            # print("Testing nodes...                     done!")
-            # sys.stdout.flush()
+            for network in exp.networks():
 
-            # """
-            # TEST VECTORS
-            # """
+                agents = network.nodes(type=Agent)
+                vectors = network.vectors()
+                genetic_source = network.nodes(type=GeneticSource)[0]
 
-            # print("Testing vectors...", end="\r")
-            # sys.stdout.flush()
+                for agent in agents:
+                    if agent.generation == 0:
+                        assert len(agent.vectors(direction="incoming")) == 1
+                        assert agent.is_connected(direction="from", whom=genetic_source)
+                    else:
+                        assert len(agent.vectors(direction="incoming")) == 1
+                        assert len(agent.neighbors(type=BanditAgent, connection="from")) == 1
 
-            # for network in exp.networks():
+                for v in vectors:
+                    if v.origin == genetic_source:
+                        assert isinstance(v.destination, BanditAgent)
 
-            #     agents = network.nodes(type=Agent)
-            #     vectors = network.vectors()
-            #     summary_source = network.nodes(type=SummarySource)[0]
+                for agent in agents:
+                    assert len(agent.vectors(direction="incoming")) == 1
+                    if agent.generation == exp.generations-1:
+                        assert len(agent.vectors(direction="all")) == 1
 
-            #     for v in vectors:
-            #         assert isinstance(v.origin, SummarySource)
-            #         assert v.origin == summary_source
-            #         assert isinstance(v.destination, CooperationAgent)
+            print("Testing vectors...                   done!")
+            sys.stdout.flush()
 
-            #     for agent in agents:
-            #         if agent.generation == 0:
-            #             assert len(agent.vectors(direction="all")) == 0
-            #         else:
-            #             assert len(agent.vectors(direction="all")) == 1
-            #             assert len(models.Vector.query.filter_by(origin_id=summary_source.id, destination_id=agent.id).all()) == 1
+            """
+            TEST INFOS
+            """
 
-            # print("Testing vectors...                   done!")
-            # sys.stdout.flush()
+            print("Testing infos...", end="\r")
+            sys.stdout.flush()
 
-            # """
-            # TEST INFOS
-            # """
+            for network in exp.networks():
 
-            # print("Testing infos...", end="\r")
-            # sys.stdout.flush()
+                agents = network.nodes(type=Agent)
+                bandits = network.nodes(type=Bandit)
+                genetic_source = network.nodes(type=GeneticSource)[0]
 
-            # for network in exp.networks():
+                assert len(genetic_source.infos()) == 2
+                assert len(genetic_source.infos(type=Gene)) == 2
+                assert len(genetic_source.infos(type=MemoryGene)) == 1
+                assert len(genetic_source.infos(type=CuriosityGene)) == 1
 
-            #     num_groups = int(math.ceil(network.generation_size/float(network.group_size)))
-            #     levels = network.levels
+                for bandit in bandits:
+                    assert len(bandit.infos()) == 0
 
-            #     agents = network.nodes(type=Agent)
-            #     vectors = network.vectors()
-            #     summary_source = network.nodes(type=SummarySource)[0]
+                for agent in agents:
+                    infos = agent.infos()
+                    assert (len([i for i in infos if isinstance(i, Gene)])) == 2
+                    assert (len([i for i in infos if isinstance(i, MemoryGene)])) == 1
+                    assert (len([i for i in infos if isinstance(i, CuriosityGene)])) == 1
+                    assert (len([i for i in infos if isinstance(i, Pull)])) == len(infos) - 2
 
-            #     summaries = summary_source.infos()
-            #     assert len(summaries) == num_groups*network.generations
-            #     summaries = [s for s in summaries if isinstance(s, Summary)]
-            #     assert len(summaries) == num_groups*network.generations
+                    curiosity = int([i for i in infos if isinstance(i, CuriosityGene)][0].contents)
 
-            #     for generation in range(network.generations):
-            #         for group in range(num_groups):
-            #             assert len([s for s in summaries if s.group == group and s.generation == generation]) == 1
+                    pulls = [i for i in infos if isinstance(i, Pull)]
 
-            #     for agent in agents:
+                    for pull in pulls:
+                        if pull.check == "true":
+                            assert len([pp for pp in pulls if pp.trial == pull.trial and pp.check == "false"]) == 1
+                        else:
+                            if pull.remembered == "true":
+                                assert len([pp for pp in pulls if pp.trial == pull.trial and pp.check == "true"]) == 0
+                            else:
+                                assert len([pp for pp in pulls if pp.trial == pull.trial and pp.check == "true"]) == curiosity
 
-            #         infos = agent.infos()
-            #         assert len(infos) == levels
-            #         for i in infos:
-            #             assert isinstance(i, Decision)
+                    received_infos = agent.received_infos()
+                    assert len(received_infos) == 2
 
-            #         received_infos = agent.received_infos()
-            #         if agent.generation == 0:
-            #             assert len(received_infos) == 0
-            #         else:
-            #             assert len(received_infos) == 1
+            print("Testing infos...                     done!")
+            sys.stdout.flush()
 
-            # print("Testing infos...                     done!")
-            # sys.stdout.flush()
+            """
+            TEST TRANSMISSIONS
+            """
 
-            # """
-            # TEST TRANSMISSIONS
-            # """
+            print("Testing transmissions...", end="\r")
+            sys.stdout.flush()
 
-            # print("Testing transmissions...", end="\r")
-            # sys.stdout.flush()
+            for network in exp.networks():
 
-            # for network in exp.networks():
+                agents = network.nodes(type=Agent)
+                genetic_source = network.nodes(type=GeneticSource)[0]
+                infos = network.infos()
 
-            #     agents = network.nodes(type=Agent)
-            #     vectors = network.vectors()
-            #     summary_source = network.nodes(type=SummarySource)[0]
-            #     infos = network.infos()
+                assert len(genetic_source.transmissions(direction="all", status="pending")) == 0
+                assert len(genetic_source.transmissions(direction="incoming", status="all")) == 0
+                assert len(genetic_source.transmissions(direction="outgoing", status="received")) == 2*exp.generation_size
 
-            #     for agent in agents:
-            #         pending_transmissions = agent.transmissions(direction="incoming", status="pending")
-            #         received_transmissions = agent.transmissions(direction="incoming", status="received")
-            #         assert len(pending_transmissions) == 0
-            #         if agent.generation == 0:
-            #             assert len(received_transmissions) == 0
-            #         else:
-            #             assert len(received_transmissions) == 1
+                for agent in agents:
+                    assert len(agent.transmissions(direction="all", status="pending")) == 0
+                    assert len(agent.transmissions(direction="incoming", status="received")) == 2
+                    assert len(agent.transmissions(direction="outgoing", status="received")) % 2 == 0
 
-            #         if agent.generation > 0:
-            #             received_infos = agent.received_infos()
-            #             assert len(received_infos) == 1
-            #             received_info = received_infos[0]
-            #             assert isinstance(received_info, Summary)
-            #             assert received_info.generation == agent.generation - 1
-            #             assert received_info.group == agent.group
-            #         else:
-            #             assert len(agent.received_infos()) == 0
+                    if agent.generation == exp.generations-1:
+                        assert len(agent.transmissions(direction="outgoing", status="received")) == 0
 
-            # print("Testing transmissions...             done!")
+            print("Testing transmissions...             done!")
 
-            # """
-            # TEST FITNESS
-            # """
+            """
+            TEST TRANSFORMATIONS
+            """
 
-            # print("Testing fitness...", end="\r")
-            # sys.stdout.flush()
+            print("Testing transformations...", end="\r")
+            sys.stdout.flush()
 
-            # # agents = CooperationAgent.query.filter_by(network_id=2).all()
-            # # for a in agents:
-            # #     print("*****")
-            # #     print(a.generation)
-            # #     print(a.score)
-            # #     decisions = a.infos(type=Decision)
-            # #     print([d for d in decisions if d.level == 1][0].payoff)
-            # #     if len(decisions) > 1:
-            # #         print([d for d in decisions if d.level == 2][0].payoff)
-            # #     if len(decisions) > 2:
-            # #         print([d for d in decisions if d.level == 3][0].payoff)
+            for network in exp.networks():
 
-            # print("Testing fitness...                   SKIPPED - no tests.")
-            # sys.stdout.flush()
+                agents = network.nodes(type=Agent)
+                genetic_source = network.nodes(type=GeneticSource)[0]
+                infos = network.infos()
+
+                assert len(genetic_source.transformations()) == 0
+
+                for agent in agents:
+                    ts = agent.transformations()
+                    assert len(ts) == 2
+                    for t in ts:
+                        assert isinstance(t, Mutation)
+
+            print("Testing transformations...           done!")
+
+            """
+            TEST FITNESS
+            """
+
+            print("Testing fitness...", end="\r")
+            sys.stdout.flush()
+
+            print("Testing fitness...                   SKIPPED - no tests.")
+            sys.stdout.flush()
 
             print("All tests passed: good job!")
 
