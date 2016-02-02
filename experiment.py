@@ -201,13 +201,7 @@ class BanditGenerational(DiscreteGenerational):
     __mapper_args__ = {"polymorphic_identity": "bandit_generational"}
 
     def add_node(self, node):
-        agents = self.nodes(type=Agent)
-        num_agents = len(agents)
-        current_generation = int((num_agents-1)/float(self.generation_size))
-        node.generation = current_generation
-
         super(BanditGenerational, self).add_node(newcomer=node)
-
         node.receive()
 
 
