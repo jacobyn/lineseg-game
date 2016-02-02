@@ -4,7 +4,7 @@ from wallace import db
 from wallace.nodes import Agent, Source
 from wallace.information import Gene, Meme
 from wallace import models
-from experiment import CooperationGame, Decision, CooperationAgent, SummarySource, Summary
+from experiment import BanditGame, MemoryGene, CuriosityGene, Pull
 import random
 import traceback
 from datetime import datetime
@@ -24,7 +24,7 @@ def timenow():
     return datetime.now()
 
 
-class TestCooperation(object):
+class TestBandits(object):
 
     sandbox = False
 
@@ -144,10 +144,10 @@ class TestCooperation(object):
             self.db.add_all(args)
             self.db.commit()
 
-        def test_run_cooperation(self):
+        def test_run_bandit(self):
 
             """
-            SIMULATE THE COOPERATION GAME
+            SIMULATE THE BANDIT GAME
             """
 
             hit_id = str(random.random())
@@ -158,11 +158,11 @@ class TestCooperation(object):
             sys.stdout.flush()
 
             exp_setup_start = timenow()
-            exp = CooperationGame(self.db)
+            exp = BanditGame(self.db)
             exp_setup_stop = timenow()
 
             exp_setup_start2 = timenow()
-            exp = CooperationGame(self.db)
+            exp = BanditGame(self.db)
             exp_setup_stop2 = timenow()
 
             p_ids = []
@@ -218,12 +218,36 @@ class TestCooperation(object):
                         assign_time += (assign_stop_time - assign_start_time)
 
                         process_start_time = timenow()
-                        levels = agent.network.levels
 
-                        for l in range(levels):
-                            d = int(round(random.random()))
-                            dec = Decision(origin=agent, contents=d)
-                            dec.level = l+1
+                        memory = int(agent.infos(type=MemoryGene)[0].contents)
+                        curiosity = int(agent.infos(type=CuriosityGene)[0].contents)
+                        bandit_memory = []
+                        for trial in range(exp.n_trials):
+                            bandit_id = random.randint(0, exp.n_bandits-1)
+                            if memory > 0:
+                                remember_bandit = bandit_id in bandit_memory[-memory:]
+                                if remember_bandit:
+                                    remember_bandit = "true"
+                                else:
+                                    remember_bandit = "false"
+                            else:
+                                remember_bandit = "false"
+                            if remember_bandit == "false":
+                                vals = random.sample(range(1, exp.n_options + 1), curiosity)
+                                for val in vals:
+                                    pull = Pull(origin=agent, contents=val)
+                                    pull.check = "true"
+                                    pull.bandit_id = bandit_id
+                                    pull.remembered = remember_bandit
+                                    pull.trial = trial
+                            pull = Pull(origin=agent, contents=random.randint(1, exp.n_options))
+                            pull.check = "false"
+                            pull.bandit_id = bandit_id
+                            pull.remembered = remember_bandit
+                            pull.trial = trial
+                            bandit_memory.append(bandit_id)
+                        self.db.commit()
+                        agent.calculate_fitness()
                         self.db.commit()
                         process_stop_time = timenow()
                         process_time += (process_stop_time - process_start_time)
@@ -265,168 +289,168 @@ class TestCooperation(object):
             TEST NODES
             """
 
-            print("Testing nodes...", end="\r")
-            sys.stdout.flush()
+            # print("Testing nodes...", end="\r")
+            # sys.stdout.flush()
 
-            for network in exp.networks():
+            # for network in exp.networks():
 
-                allowed_groups = range(int(math.ceil(network.generation_size/float(network.group_size))))
+            #     allowed_groups = range(int(math.ceil(network.generation_size/float(network.group_size))))
 
-                agents = network.nodes(type=Agent)
-                assert len(agents) == network.max_size
-                for generation in range(network.generations):
-                    assert len([a for a in agents if a.generation == generation]) == network.generation_size
-                    for group in allowed_groups:
-                        assert len([a for a in agents if a.generation == generation and a.group == group]) == network.group_size
+            #     agents = network.nodes(type=Agent)
+            #     assert len(agents) == network.max_size
+            #     for generation in range(network.generations):
+            #         assert len([a for a in agents if a.generation == generation]) == network.generation_size
+            #         for group in allowed_groups:
+            #             assert len([a for a in agents if a.generation == generation and a.group == group]) == network.group_size
 
-                sources = network.nodes(type=Source)
-                assert len(sources) == 1
-                summary_source = network.nodes(type=SummarySource)
-                assert len(summary_source) == 1
+            #     sources = network.nodes(type=Source)
+            #     assert len(sources) == 1
+            #     summary_source = network.nodes(type=SummarySource)
+            #     assert len(summary_source) == 1
 
-                summary_source = summary_source[0]
+            #     summary_source = summary_source[0]
 
-                vectors = network.vectors()
+            #     vectors = network.vectors()
 
-                for agent in agents:
-                    assert type(agent) == CooperationAgent
+            #     for agent in agents:
+            #         assert type(agent) == CooperationAgent
 
-                for agent in agents:
-                    if agent.generation == 0:
-                        assert len(agent.vectors(direction="incoming")) == 0
-                    else:
-                        assert len(agent.vectors(direction="incoming")) == 1
-                        assert agent.is_connected(direction="from", whom=summary_source)
-                        assert len(agent.neighbors(type=CooperationAgent, connection="from")) == 0
+            #     for agent in agents:
+            #         if agent.generation == 0:
+            #             assert len(agent.vectors(direction="incoming")) == 0
+            #         else:
+            #             assert len(agent.vectors(direction="incoming")) == 1
+            #             assert agent.is_connected(direction="from", whom=summary_source)
+            #             assert len(agent.neighbors(type=CooperationAgent, connection="from")) == 0
 
-            print("Testing nodes...                     done!")
-            sys.stdout.flush()
+            # print("Testing nodes...                     done!")
+            # sys.stdout.flush()
 
-            """
-            TEST VECTORS
-            """
+            # """
+            # TEST VECTORS
+            # """
 
-            print("Testing vectors...", end="\r")
-            sys.stdout.flush()
+            # print("Testing vectors...", end="\r")
+            # sys.stdout.flush()
 
-            for network in exp.networks():
+            # for network in exp.networks():
 
-                agents = network.nodes(type=Agent)
-                vectors = network.vectors()
-                summary_source = network.nodes(type=SummarySource)[0]
+            #     agents = network.nodes(type=Agent)
+            #     vectors = network.vectors()
+            #     summary_source = network.nodes(type=SummarySource)[0]
 
-                for v in vectors:
-                    assert isinstance(v.origin, SummarySource)
-                    assert v.origin == summary_source
-                    assert isinstance(v.destination, CooperationAgent)
+            #     for v in vectors:
+            #         assert isinstance(v.origin, SummarySource)
+            #         assert v.origin == summary_source
+            #         assert isinstance(v.destination, CooperationAgent)
 
-                for agent in agents:
-                    if agent.generation == 0:
-                        assert len(agent.vectors(direction="all")) == 0
-                    else:
-                        assert len(agent.vectors(direction="all")) == 1
-                        assert len(models.Vector.query.filter_by(origin_id=summary_source.id, destination_id=agent.id).all()) == 1
+            #     for agent in agents:
+            #         if agent.generation == 0:
+            #             assert len(agent.vectors(direction="all")) == 0
+            #         else:
+            #             assert len(agent.vectors(direction="all")) == 1
+            #             assert len(models.Vector.query.filter_by(origin_id=summary_source.id, destination_id=agent.id).all()) == 1
 
-            print("Testing vectors...                   done!")
-            sys.stdout.flush()
+            # print("Testing vectors...                   done!")
+            # sys.stdout.flush()
 
-            """
-            TEST INFOS
-            """
+            # """
+            # TEST INFOS
+            # """
 
-            print("Testing infos...", end="\r")
-            sys.stdout.flush()
+            # print("Testing infos...", end="\r")
+            # sys.stdout.flush()
 
-            for network in exp.networks():
+            # for network in exp.networks():
 
-                num_groups = int(math.ceil(network.generation_size/float(network.group_size)))
-                levels = network.levels
+            #     num_groups = int(math.ceil(network.generation_size/float(network.group_size)))
+            #     levels = network.levels
 
-                agents = network.nodes(type=Agent)
-                vectors = network.vectors()
-                summary_source = network.nodes(type=SummarySource)[0]
+            #     agents = network.nodes(type=Agent)
+            #     vectors = network.vectors()
+            #     summary_source = network.nodes(type=SummarySource)[0]
 
-                summaries = summary_source.infos()
-                assert len(summaries) == num_groups*network.generations
-                summaries = [s for s in summaries if isinstance(s, Summary)]
-                assert len(summaries) == num_groups*network.generations
+            #     summaries = summary_source.infos()
+            #     assert len(summaries) == num_groups*network.generations
+            #     summaries = [s for s in summaries if isinstance(s, Summary)]
+            #     assert len(summaries) == num_groups*network.generations
 
-                for generation in range(network.generations):
-                    for group in range(num_groups):
-                        assert len([s for s in summaries if s.group == group and s.generation == generation]) == 1
+            #     for generation in range(network.generations):
+            #         for group in range(num_groups):
+            #             assert len([s for s in summaries if s.group == group and s.generation == generation]) == 1
 
-                for agent in agents:
+            #     for agent in agents:
 
-                    infos = agent.infos()
-                    assert len(infos) == levels
-                    for i in infos:
-                        assert isinstance(i, Decision)
+            #         infos = agent.infos()
+            #         assert len(infos) == levels
+            #         for i in infos:
+            #             assert isinstance(i, Decision)
 
-                    received_infos = agent.received_infos()
-                    if agent.generation == 0:
-                        assert len(received_infos) == 0
-                    else:
-                        assert len(received_infos) == 1
+            #         received_infos = agent.received_infos()
+            #         if agent.generation == 0:
+            #             assert len(received_infos) == 0
+            #         else:
+            #             assert len(received_infos) == 1
 
-            print("Testing infos...                     done!")
-            sys.stdout.flush()
+            # print("Testing infos...                     done!")
+            # sys.stdout.flush()
 
-            """
-            TEST TRANSMISSIONS
-            """
+            # """
+            # TEST TRANSMISSIONS
+            # """
 
-            print("Testing transmissions...", end="\r")
-            sys.stdout.flush()
+            # print("Testing transmissions...", end="\r")
+            # sys.stdout.flush()
 
-            for network in exp.networks():
+            # for network in exp.networks():
 
-                agents = network.nodes(type=Agent)
-                vectors = network.vectors()
-                summary_source = network.nodes(type=SummarySource)[0]
-                infos = network.infos()
+            #     agents = network.nodes(type=Agent)
+            #     vectors = network.vectors()
+            #     summary_source = network.nodes(type=SummarySource)[0]
+            #     infos = network.infos()
 
-                for agent in agents:
-                    pending_transmissions = agent.transmissions(direction="incoming", status="pending")
-                    received_transmissions = agent.transmissions(direction="incoming", status="received")
-                    assert len(pending_transmissions) == 0
-                    if agent.generation == 0:
-                        assert len(received_transmissions) == 0
-                    else:
-                        assert len(received_transmissions) == 1
+            #     for agent in agents:
+            #         pending_transmissions = agent.transmissions(direction="incoming", status="pending")
+            #         received_transmissions = agent.transmissions(direction="incoming", status="received")
+            #         assert len(pending_transmissions) == 0
+            #         if agent.generation == 0:
+            #             assert len(received_transmissions) == 0
+            #         else:
+            #             assert len(received_transmissions) == 1
 
-                    if agent.generation > 0:
-                        received_infos = agent.received_infos()
-                        assert len(received_infos) == 1
-                        received_info = received_infos[0]
-                        assert isinstance(received_info, Summary)
-                        assert received_info.generation == agent.generation - 1
-                        assert received_info.group == agent.group
-                    else:
-                        assert len(agent.received_infos()) == 0
+            #         if agent.generation > 0:
+            #             received_infos = agent.received_infos()
+            #             assert len(received_infos) == 1
+            #             received_info = received_infos[0]
+            #             assert isinstance(received_info, Summary)
+            #             assert received_info.generation == agent.generation - 1
+            #             assert received_info.group == agent.group
+            #         else:
+            #             assert len(agent.received_infos()) == 0
 
-            print("Testing transmissions...             done!")
+            # print("Testing transmissions...             done!")
 
-            """
-            TEST FITNESS
-            """
+            # """
+            # TEST FITNESS
+            # """
 
-            print("Testing fitness...", end="\r")
-            sys.stdout.flush()
+            # print("Testing fitness...", end="\r")
+            # sys.stdout.flush()
 
-            # agents = CooperationAgent.query.filter_by(network_id=2).all()
-            # for a in agents:
-            #     print("*****")
-            #     print(a.generation)
-            #     print(a.score)
-            #     decisions = a.infos(type=Decision)
-            #     print([d for d in decisions if d.level == 1][0].payoff)
-            #     if len(decisions) > 1:
-            #         print([d for d in decisions if d.level == 2][0].payoff)
-            #     if len(decisions) > 2:
-            #         print([d for d in decisions if d.level == 3][0].payoff)
+            # # agents = CooperationAgent.query.filter_by(network_id=2).all()
+            # # for a in agents:
+            # #     print("*****")
+            # #     print(a.generation)
+            # #     print(a.score)
+            # #     decisions = a.infos(type=Decision)
+            # #     print([d for d in decisions if d.level == 1][0].payoff)
+            # #     if len(decisions) > 1:
+            # #         print([d for d in decisions if d.level == 2][0].payoff)
+            # #     if len(decisions) > 2:
+            # #         print([d for d in decisions if d.level == 3][0].payoff)
 
-            print("Testing fitness...                   SKIPPED - no tests.")
-            sys.stdout.flush()
+            # print("Testing fitness...                   SKIPPED - no tests.")
+            # sys.stdout.flush()
 
             print("All tests passed: good job!")
 

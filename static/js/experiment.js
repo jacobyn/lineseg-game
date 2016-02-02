@@ -173,7 +173,8 @@ check_tile = function (tile) {
                 info_type: "Pull",
                 property1: true, // check
                 property2: current_bandit, // bandit_id
-                property3: remember_bandit // remembered
+                property3: remember_bandit, // remembered
+                property5: trial_in_this_network
             },
         });
         tiles_checked = tiles_checked + 1;
@@ -222,7 +223,8 @@ choose_tile = function (tile) {
                 info_type: "Pull",
                 property1: false, // check
                 property2: current_bandit, // bandit_id
-                property3: remember_bandit // remembered
+                property3: remember_bandit, // remembered
+                property5: trial_in_this_network
             },
         });
         name_of_tile = "#tile_" + tile;

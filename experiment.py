@@ -26,7 +26,7 @@ class BanditGame(Experiment):
 
         """ Wallace parameters """
         self.task = "The Bandit Game"
-        self.verbose = True
+        self.verbose = False
         self.experiment_repeats = 2
         self.practice_repeats = 0
         self.agent = BanditAgent
@@ -137,9 +137,9 @@ class BanditGame(Experiment):
                 final_decisions = [d for d in decisions if d.origin_id == node.id and d.check == "false"]
                 for decision in final_decisions:
                     if decision.remembered == "true":
-                        assert (len([d for d in decisions if d.origin_id == node.id and d.check == "true" and d.bandit_id == decision.bandit_id])) == 0
+                        assert (len([d for d in decisions if d.origin_id == node.id and d.check == "true" and d.bandit_id == decision.bandit_id and d.trial == decision.trial])) == 0
                     else:
-                        assert (len([d for d in decisions if d.origin_id == node.id and d.check == "true" and d.bandit_id == decision.bandit_id])) == curiosity
+                        assert (len([d for d in decisions if d.origin_id == node.id and d.check == "true" and d.bandit_id == decision.bandit_id and d.trial == decision.trial])) == curiosity
 
             # all decisions have an int payoff
             for d in decisions:
@@ -365,10 +365,34 @@ class Pull(Info):
     def payoff(self):
         return cast(self.property4, Integer)
 
+    @hybrid_property
+    def trial(self):
+        return int(self.property5)
+
+    @trial.setter
+    def trial(self, trial):
+        self.property5 = repr(trial)
+
+    @trial.expression
+    def trial(self):
+        return cast(self.property5, Integer)
+
 
 class BanditAgent(Agent):
 
     __mapper_args__ = {"polymorphic_identity": "bandit_agent"}
+
+    @hybrid_property
+    def generation(self):
+        return int(self.property2)
+
+    @generation.setter
+    def generation(self, generation):
+        self.property2 = repr(generation)
+
+    @generation.expression
+    def generation(self):
+        return cast(self.property2, Integer)
 
     def update(self, infos):
         for info in infos:
