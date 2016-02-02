@@ -30,10 +30,11 @@ class BanditGame(Experiment):
         self.experiment_repeats = 2
         self.practice_repeats = 0
         self.agent = BanditAgent
-        self.generation_size = 20
-        self.network = lambda: BanditGenerational(generations=40,
+        self.generation_size = 10
+        self.generations = 10
+        self.network = lambda: BanditGenerational(generations=self.generations,
                                                   generation_size=self.generation_size,
-                                                  initial_source=False)
+                                                  initial_source=True)
         self.bonus_payment = 1.0
         self.initial_recruitment_size = self.generation_size
         self.instruction_pages = ["instructions/instruct-1.html",
@@ -46,7 +47,7 @@ class BanditGame(Experiment):
 
         """ BanditGame parameters """
         # how many bandits each node visits
-        self.n_trials = 2
+        self.n_trials = 20
 
         # how many bandits there are
         self.n_bandits = 5
@@ -205,40 +206,18 @@ class BanditGenerational(DiscreteGenerational):
         current_generation = int((num_agents-1)/float(self.generation_size))
         node.generation = current_generation
 
-        if current_generation == 0:
-            source = GeneticSource.query.filter_by(network_id=self.id).one()
-            source.connect(whom=node)
-            source.transmit(to_whom=node, what=Gene)
-        else:
-            prev_agents = type(node).query\
-                .filter_by(failed=False,
-                           network_id=self.id,
-                           generation=current_generation-1)\
-                .all()
-            prev_fits = [p.fitness for p in prev_agents]
-            prev_probs = [(f/(1.0*sum(prev_fits))) for f in prev_fits]
-
-            rnd = random.random()
-            temp = 0.0
-            for i, probability in enumerate(prev_probs):
-                temp += probability
-                if temp > rnd:
-                    parent = prev_agents[i]
-                    break
-
-            parent.connect(whom=node)
-            parent.transmit(what=Gene, to_whom=node)
+        super(BanditGenerational, self).add_node(newcomer=node)
 
         node.receive()
-
-        # bandits = Bandit.query.filter_by(network_id=self.id).all()
-        # node.connect(whom=bandits, direction="from")
 
 
 class GeneticSource(Source):
     """ A source that initializes the genes of the first generation """
 
     __mapper_args__ = {"polymorphic_identity": "genetic_source"}
+
+    def _what(self):
+        return Gene
 
     def create_genes(self):
         exp = BanditGame(db.session)
@@ -416,9 +395,12 @@ class BanditAgent(Agent):
             if int(d.contents) == bandit.treasure_tile:
                 fitness = fitness + (pulls-curiosity)
 
-        fitness = max([fitness, 0])
+        fitness = max([fitness, 0.0001])
         fitness = ((1.0*fitness)*exp.f_scale_factor)**exp.f_power_factor
         self.fitness = fitness
+
+    def _what(self):
+        return Gene
 
 
 extra_routes = Blueprint(
