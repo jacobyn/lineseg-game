@@ -100,10 +100,10 @@ class TestBandits(object):
                         args = {"info_type": "Gene"}
                         infos = session.get(url + '/node/' + str(agent_id) + '/infos', headers=headers, params=args).json()['infos']
                         for info in infos:
-                            if info.type == "memory_gene":
-                                my_memory = int(i.contents)
-                            if info.type == "curiosity_gene":
-                                my_curiosity = int(i.contents)
+                            if info['type'] == "memory_gene":
+                                my_memory = int(info['contents'])
+                            if info['type'] == "curiosity_gene":
+                                my_curiosity = int(info['contents'])
 
                         # get_num_bandits()
                         num_bandits = session.get(url + '/num_bandits', headers=headers).json()['num_bandits']
