@@ -98,8 +98,7 @@ class TestBandits(object):
 
                         # get_genes()
                         args = {"info_type": "Gene"}
-                        infos = session.get(url + '/node/' + str(agent_id) + '/infos', headers=headers, params=args).infos
-                        infos = infos.json()['infos']
+                        infos = session.get(url + '/node/' + str(agent_id) + '/infos', headers=headers, params=args).json()['infos']
                         for info in infos:
                             if info.type == "memory_gene":
                                 my_memory = int(i.contents)
