@@ -30,8 +30,8 @@ class BanditGame(Experiment):
         self.experiment_repeats = 3
         self.practice_repeats = 0
         self.agent = BanditAgent
-        self.generation_size = 2
-        self.generations = 2
+        self.generation_size = 1
+        self.generations = 1
         self.network = lambda: BanditGenerational(generations=self.generations,
                                                   generation_size=self.generation_size,
                                                   initial_source=True)
@@ -191,7 +191,7 @@ class BanditGame(Experiment):
 
         total_trials = self.n_trials * self.experiment_repeats
 
-        bonus = (total_score/(1.0*total_trials))/5.0
+        bonus = round((total_score/(1.0*total_trials))/5.0, 2)
 
         return max(min(bonus, 1.0), 0.0)*self.bonus_payment
 

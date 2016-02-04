@@ -28,7 +28,7 @@ class TestBandits(object):
 
     if sandbox:
 
-        autobots = 1
+        autobots = 20
 
         sandbox_output = subprocess.check_output(
             "wallace sandbox",
