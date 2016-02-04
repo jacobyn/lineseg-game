@@ -158,6 +158,9 @@ class TestBandits(object):
                                 "property5": current_trial
                             }
                             session.post(url + '/info/' + agent_id, headers=headers, data=data)
+
+                        # calculate fitness
+                        session.get(url + '/node/' + agent_id + '/calculate_fitness')
                 except:
                     working = False
                     print("critical error for bot {}".format(i))
