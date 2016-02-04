@@ -1,20 +1,20 @@
 [Experiment Configuration]
 wallace_version = 0.5
 mode = deploy
-auto_recruit = false
+auto_recruit = true
 
 [HIT Configuration]
 title = Treasure tiles
 description = Look for treasure under tiles, try to remember where it is
-amt_keywords = Psychology, cooperation, punishement
+amt_keywords = Psychology, memory
 base_payment = 1.00
 lifetime = 24
 duration = 0.5
 us_only = true
 approve_requirement = 95
 contact_email_on_error = thomas.j.h.morgan@gmail.com
-ad_group = CooperationGame
-psiturk_keywords = cooperation
+ad_group = TreasureTiles
+psiturk_keywords = memory
 organization_name = UC Berkeley
 browser_exclude_rule = MSIE, mobile, tablet
 
