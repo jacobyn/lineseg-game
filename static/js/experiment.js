@@ -149,7 +149,7 @@ prepare_for_trial = function() {
     } else {
         $("#mini_title").html("<p>You are looking for treasure in " + current_bandit_name + " again</p>");
         $("#instructions").html("<p>You have been here before so you cannot check under any more tiles.<br>Instead try to remember what you learned the last time you were here.<br>Please make your final choice of tile.</p>");
-        setTimeout(function() {prepare_for_decision();}, 2000);
+        setTimeout(function() {prepare_for_decision();}, 500);
     }
 };
 
@@ -189,7 +189,7 @@ check_tile = function (tile) {
             $("#instructions").html("<p>Please wait...<br><br>");
             setTimeout(function() {
                 prepare_for_decision();
-            }, 2000);
+            }, 1500);
         }
     }
 };
@@ -262,7 +262,7 @@ travel = function () {
     setTimeout(function() {
         $("#travel_div").hide();
         $("#table_div").show();
-    }, 2500);
+    }, 2000);
 };
 
 show_warning = function () {
