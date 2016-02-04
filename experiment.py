@@ -26,12 +26,12 @@ class BanditGame(Experiment):
 
         """ Wallace parameters """
         self.task = "The Bandit Game"
-        self.verbose = False
+        self.verbose = True
         self.experiment_repeats = 3
         self.practice_repeats = 0
         self.agent = BanditAgent
-        self.generation_size = 1
-        self.generations = 1
+        self.generation_size = 2
+        self.generations = 2
         self.network = lambda: BanditGenerational(generations=self.generations,
                                                   generation_size=self.generation_size,
                                                   initial_source=True)

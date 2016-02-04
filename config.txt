@@ -1,6 +1,6 @@
 [Experiment Configuration]
 wallace_version = 0.5
-mode = sandbox
+mode = deploy
 auto_recruit = false
 
 [HIT Configuration]
@@ -45,5 +45,5 @@ num_conds = 1
 num_counters = 1
 
 [Shell Parameters]
-launch_in_sandbox_mode = true
+launch_in_sandbox_mode = false
 
