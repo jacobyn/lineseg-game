@@ -2,16 +2,13 @@ from __future__ import print_function
 import sys
 from wallace import db
 from wallace.nodes import Agent, Source
-from wallace.information import Gene, Meme
+from wallace.information import Gene
 from wallace.transformations import Mutation
 from wallace import models
 from experiment import BanditGame, MemoryGene, CuriosityGene, Pull, GeneticSource, Bandit, BanditAgent
 import random
 import traceback
 from datetime import datetime
-import json
-from json import dumps
-import math
 
 import subprocess
 import re
@@ -31,7 +28,7 @@ class TestBandits(object):
 
     if sandbox:
 
-        autobots = 60
+        autobots = 1
 
         sandbox_output = subprocess.check_output(
             "wallace sandbox",
@@ -75,29 +72,92 @@ class TestBandits(object):
             session.get(url + '/instructions/1', params=args, headers=headers)
             session.get(url + '/instructions/2', params=args, headers=headers)
             session.get(url + '/instructions/3', params=args, headers=headers)
+            session.get(url + '/instructions/4', params=args, headers=headers)
+            bah = session.get(url + '/num_trials', headers=headers)
+            trials_per_network = bah.n_trials
+            session.get(url + '/instructions/5', params=args, headers=headers)
             session.get(url + '/stage', params=args, headers=headers)
 
             # work through the trials
             working = True
             while working is True:
-                current_trial += 1
                 agent = None
                 transmission = None
                 information = None
                 information2 = None
                 information3 = None
                 try:
+                    # create_agent()
                     agent = session.post(url + '/node/' + my_id, headers=headers)
                     working = agent.status_code == 200
                     if working is True:
                         agent_id = agent.json()['node']['id']
                         network_id = agent.json()['node']['network_id']
-                        levels = int((session.get(url + '/levels/' + str(network_id), headers=headers)).json()['levels'])
-                        for l in range(levels):
-                            contents = str(int(round(random.random())))
-                            args = {'info_type': 'Decision', 'contents': contents}
-                            session.post(url + '/info/' + str(agent_id) + '/' + str(l + 1), data=args, headers=headers)
+                        current_trial = 0
+                        bandit_memory = []
 
+                        # get_genes()
+                        args = {"info_type": "Gene"}
+                        infos = session.get(url + '/node/' + agent_id + '/infos', headers=headers, params=args).infos
+                        for info in infos:
+                            if info.type == "memory_gene":
+                                my_memory = int(i.contents)
+                            if info.type == "curiosity_gene":
+                                my_curiosity = int(i.contents)
+
+                        # get_num_bandits()
+                        num_bandits = session.get(url + '/num_bandits', headers=headers).num_bandits
+
+                        for trial in range(trials_per_network):
+
+                            # pick_a_bandit()
+                            current_bandit = int(random.random()*num_bandits)
+                            if my_memory > 0:
+                                remember_bandit = current_bandit in bandit_memory[-my_memory:]
+                            else:
+                                remember_bandit = False
+                            if remember_bandit:
+                                remember_bandit = "true"
+                            else:
+                                remember_bandit = "false"
+
+                            # get_num_tiles()
+                            num_tiles = session.get(url + '/num_arms/' + network_id + '/' + current_bandit, headers=headers).num_tiles
+
+                            # get_treasure_tile()
+                            treasure_tile = session.get(url + '/treasure_tile/' + network_id + '/' + current_bandit, headers=headers).treasure_tile
+
+                            # prepare_for_trial
+                            current_trial += 1
+
+                            tiles_to_check = []
+                            if remember_bandit == "false":
+                                # check tiles
+                                tiles_to_check = random.sample(range(1, num_tiles+1), my_curiosity)
+                                for t in tiles_to_check:
+                                    data = {
+                                        "contents": t,
+                                        "info_type": "Pull",
+                                        "property1": "true",
+                                        "property2": current_bandit,
+                                        "property3": remember_bandit,
+                                        "property5": current_trial
+                                    }
+                                    session.post(url + '/info/' + agent_id, headers=headers, data=data)
+
+                            if treasure_tile in tiles_to_check:
+                                final_choice = treasure_tile
+                            else:
+                                final_choice = random.sample(range(1, num_tiles+1), 1)[0]
+                            data = {
+                                "contents": final_choice,
+                                "info_type": "Pull",
+                                "property1": "false",
+                                "property2": current_bandit,
+                                "property3": remember_bandit,
+                                "property5": current_trial
+                            }
+                            session.post(url + '/info/' + agent_id, headers=headers, data=data)
                 except:
                     working = False
                     print("critical error for bot {}".format(i))
@@ -108,6 +168,10 @@ class TestBandits(object):
                     print("bot {} 2nd information request: {}".format(i, information2))
                     print("bot {} 3rd information request: {}".format(i, information3))
                     traceback.print_exc()
+
+            # go to debrief
+            args = {'hitId': 'rogers-test-hit', 'assignmentId': i, 'workerId': i, 'mode': 'sandbox'}
+            session.get(url + '/debrief/1', params=args, headers=headers)
 
             # send AssignmentSubmitted notification
             args = {
@@ -473,5 +537,3 @@ class TestBandits(object):
                 print("Participant {}: {}, total: {}".format(i, p_times[i], total_time))
 
             print("#########")
-            # test = [p.total_seconds() for p in p_times]
-            # print(test)

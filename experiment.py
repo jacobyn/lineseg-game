@@ -27,7 +27,7 @@ class BanditGame(Experiment):
         """ Wallace parameters """
         self.task = "The Bandit Game"
         self.verbose = False
-        self.experiment_repeats = 2
+        self.experiment_repeats = 3
         self.practice_repeats = 0
         self.agent = BanditAgent
         self.generation_size = 10
@@ -47,7 +47,7 @@ class BanditGame(Experiment):
 
         """ BanditGame parameters """
         # how many bandits each node visits
-        self.n_trials = 20
+        self.n_trials = 4
 
         # how many bandits there are
         self.n_bandits = 5
