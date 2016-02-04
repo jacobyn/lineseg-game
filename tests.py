@@ -24,7 +24,7 @@ def timenow():
 
 class TestBandits(object):
 
-    sandbox = False
+    sandbox = True
 
     if sandbox:
 
@@ -74,7 +74,7 @@ class TestBandits(object):
             session.get(url + '/instructions/3', params=args, headers=headers)
             session.get(url + '/instructions/4', params=args, headers=headers)
             bah = session.get(url + '/num_trials', headers=headers)
-            trials_per_network = bah.n_trials
+            trials_per_network = bah.data.n_trials
             session.get(url + '/instructions/5', params=args, headers=headers)
             session.get(url + '/stage', params=args, headers=headers)
 
