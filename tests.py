@@ -122,10 +122,10 @@ class TestBandits(object):
                                 remember_bandit = "false"
 
                             # get_num_tiles()
-                            num_tiles = session.get(url + '/num_arms/' + network_id + '/' + current_bandit, headers=headers).json()['num_tiles']
+                            num_tiles = session.get(url + '/num_arms/' + str(network_id) + '/' + str(current_bandit), headers=headers).json()['num_tiles']
 
                             # get_treasure_tile()
-                            treasure_tile = session.get(url + '/treasure_tile/' + network_id + '/' + current_bandit, headers=headers).json()['treasure_tile']
+                            treasure_tile = session.get(url + '/treasure_tile/' + str(network_id) + '/' + str(current_bandit), headers=headers).json()['treasure_tile']
 
                             # prepare_for_trial
                             current_trial += 1
