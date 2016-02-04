@@ -98,7 +98,7 @@ class TestBandits(object):
 
                         # get_genes()
                         args = {"info_type": "Gene"}
-                        infos = session.get(url + '/node/' + agent_id + '/infos', headers=headers, params=args).infos
+                        infos = session.get(url + '/node/' + str(agent_id) + '/infos', headers=headers, params=args).infos
                         infos = infos.json()['infos']
                         for info in infos:
                             if info.type == "memory_gene":
@@ -144,7 +144,7 @@ class TestBandits(object):
                                         "property3": remember_bandit,
                                         "property5": current_trial
                                     }
-                                    session.post(url + '/info/' + agent_id, headers=headers, data=data)
+                                    session.post(url + '/info/' + str(agent_id), headers=headers, data=data)
 
                             if treasure_tile in tiles_to_check:
                                 final_choice = treasure_tile
@@ -158,10 +158,10 @@ class TestBandits(object):
                                 "property3": remember_bandit,
                                 "property5": current_trial
                             }
-                            session.post(url + '/info/' + agent_id, headers=headers, data=data)
+                            session.post(url + '/info/' + str(agent_id), headers=headers, data=data)
 
                         # calculate fitness
-                        session.get(url + '/node/' + agent_id + '/calculate_fitness')
+                        session.get(url + '/node/' + str(agent_id) + '/calculate_fitness')
                 except:
                     working = False
                     print("critical error for bot {}".format(i))
