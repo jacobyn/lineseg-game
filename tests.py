@@ -74,7 +74,7 @@ class TestBandits(object):
             session.get(url + '/instructions/3', params=args, headers=headers)
             session.get(url + '/instructions/4', params=args, headers=headers)
             bah = session.get(url + '/num_trials', headers=headers)
-            trials_per_network = bah.data.n_trials
+            trials_per_network = bah.json()['n_trials']
             session.get(url + '/instructions/5', params=args, headers=headers)
             session.get(url + '/stage', params=args, headers=headers)
 
@@ -99,6 +99,7 @@ class TestBandits(object):
                         # get_genes()
                         args = {"info_type": "Gene"}
                         infos = session.get(url + '/node/' + agent_id + '/infos', headers=headers, params=args).infos
+                        infos = infos.json()['infos']
                         for info in infos:
                             if info.type == "memory_gene":
                                 my_memory = int(i.contents)
@@ -106,7 +107,7 @@ class TestBandits(object):
                                 my_curiosity = int(i.contents)
 
                         # get_num_bandits()
-                        num_bandits = session.get(url + '/num_bandits', headers=headers).num_bandits
+                        num_bandits = session.get(url + '/num_bandits', headers=headers).json()['num_bandits']
 
                         for trial in range(trials_per_network):
 
@@ -122,10 +123,10 @@ class TestBandits(object):
                                 remember_bandit = "false"
 
                             # get_num_tiles()
-                            num_tiles = session.get(url + '/num_arms/' + network_id + '/' + current_bandit, headers=headers).num_tiles
+                            num_tiles = session.get(url + '/num_arms/' + network_id + '/' + current_bandit, headers=headers).json()['num_tiles']
 
                             # get_treasure_tile()
-                            treasure_tile = session.get(url + '/treasure_tile/' + network_id + '/' + current_bandit, headers=headers).treasure_tile
+                            treasure_tile = session.get(url + '/treasure_tile/' + network_id + '/' + current_bandit, headers=headers).json()['treasure_tile']
 
                             # prepare_for_trial
                             current_trial += 1
