@@ -229,7 +229,7 @@ choose_tile = function (tile) {
         $(name_of_tile).html(name_of_image);
         setTimeout(function() {
             advance_to_next_trial();
-        }, 2000);
+        }, 1000);
     }
 };
 
