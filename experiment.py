@@ -64,7 +64,7 @@ class BanditGame(Experiment):
         # fitness affecting parameters
         self.f_min = 2
         self.f_scale_factor = 0.01
-        self.f_power_factor = 3
+        self.f_power_factor = 2
 
         # seed parameters
         self.seed_memory = 1
