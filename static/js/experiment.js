@@ -189,7 +189,7 @@ check_tile = function (tile) {
             $("#instructions").html("<p>Please wait...<br><br>");
             setTimeout(function() {
                 prepare_for_decision();
-            }, 1500);
+            }, 1000);
         }
     }
 };
