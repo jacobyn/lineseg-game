@@ -4,7 +4,7 @@ var trials_per_network;
 var trial_in_this_network = 0;
 var round_number = 0;
 var number_of_rounds;
-var available_bandit_names = ["England", "Northern Ireland", "France", "Spain", "Portugal", "Germany", "Austria", "Poland", "Romania", "Ireland", "Italy", "Croatia", "Albania", "Bulgaria", "Morocco", "Libya", "Tunisia", "Egypt", "Iran", "Scotland", "Greece", "Turkey", "Sierra Leone", "Ghana", "Nigeria", "Mali", "Congo", "Ethiopia", "Chad", "Wales", "India", "Bangladesh", "Pakistan", "Afghanistan", "Australia", "New Zealand", "Tonga", "Papua New Guinea", "Fiji", "Thailand", "Laos", "Myanmar", "China", "Japan", "South Korea", "Mongolia", "Turkmenistan", "The United States", "Canada", "Greenland", "Mexico", "Guatemala", "Colombia", "Sri Lanka", "Brasil", "Argentina", "Chile", "Russia", "Ukraine", "Sweden", "Norway", "Finland", "Denmark", "Belgium", "Holland", "Senegal", "Botswana", "Madagascar", "Ecuador", "Costa Rica", "Nepal", "Yemen", "Gabon"];
+var available_bandit_names = ["England", "Burundi", "France", "Spain", "Portugal", "Germany", "Austria", "Poland", "Romania", "Ireland", "Italy", "Croatia", "Albania", "Bulgaria", "Morocco", "Libya", "Tunisia", "Egypt", "Iran", "Scotland", "Greece", "Turkey", "Sierra Leone", "Ghana", "Nigeria", "Mali", "Mozambique", "Ethiopia", "Chad", "Wales", "India", "Bangladesh", "Pakistan", "Afghanistan", "Australia", "New Zealand", "Tonga", "Papua New Guinea", "Fiji", "Thailand", "Laos", "Myanmar", "China", "Japan", "South Korea", "Mongolia", "Turkmenistan", "The United States", "Canada", "Greenland", "Mexico", "Guatemala", "Colombia", "Sri Lanka", "Brasil", "Argentina", "Chile", "Russia", "Ukraine", "Sweden", "Norway", "Finland", "Denmark", "Belgium", "Holland", "Senegal", "Botswana", "Madagascar", "Ecuador", "Costa Rica", "Nepal", "Yemen", "Gabon"];
 var bandit_names;
 
 // get all the details to correctly present the trial number bar
@@ -101,6 +101,8 @@ pick_a_bandit = function () {
     }
 
     current_bandit_name = bandit_names[current_bandit];
+    name_of_image = '<img src="/static/images/flag_' + current_bandit_name + '.png"/>';
+    $("#flag_div").html(name_of_image);
     get_num_tiles();
 };
 
@@ -229,7 +231,7 @@ choose_tile = function (tile) {
         $(name_of_tile).html(name_of_image);
         setTimeout(function() {
             advance_to_next_trial();
-        }, 1000);
+        }, 800);
     }
 };
 
@@ -260,7 +262,7 @@ travel = function () {
     setTimeout(function() {
         $("#travel_div").hide();
         $("#table_div").show();
-    }, 2000);
+    }, 1200);
 };
 
 show_warning = function () {

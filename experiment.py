@@ -30,8 +30,8 @@ class BanditGame(Experiment):
         self.experiment_repeats = 3
         self.practice_repeats = 0
         self.agent = BanditAgent
-        self.generation_size = 40
-        self.generations = 40
+        self.generation_size = 10
+        self.generations = 10
         self.network = lambda: BanditGenerational(generations=self.generations,
                                                   generation_size=self.generation_size,
                                                   initial_source=True)
@@ -147,6 +147,10 @@ class BanditGame(Experiment):
                 if d.check == "false":
                     assert isinstance(int(d.contents), int)
 
+            # all nodes have a fitness
+            for node in nodes:
+                assert isinstance(node.fitness, float)
+
             self.log("Data check passed")
             return True
         except:
@@ -194,6 +198,41 @@ class BanditGame(Experiment):
         bonus = round((total_score/(1.0*total_trials))/5.0, 2)
 
         return max(min(bonus, 1.0), 0.0)*self.bonus_payment
+
+    def attention_check(self, participant):
+        print "running attention check"
+        bandits = Bandit.query.all()
+        nodes = BanditAgent.query.filter_by(participant_id=participant.uniqueid).all()
+        pulls = []
+        for node in nodes:
+            pulls.extend(node.infos(type=Pull))
+
+        final_decisions = [p for p in pulls if p.check == "false"]
+        checks = [p for p in pulls if p.check == "true"]
+
+        times_found_treasure = 0
+        times_chose_treasure = 0
+
+        print "there are {} decisions to process".format(len(final_decisions))
+
+        for d in final_decisions:
+            if d.remembered == "false":
+                print "bandit not remembered, getting extra info:"
+                right_answer = [b for b in bandits if b.network_id == d.network_id and b.bandit_id == d.bandit_id][0].treasure_tile
+                checked_tiles = [int(c.contents) for c in checks if c.network_id == d.network_id and c.bandit_id == d.bandit_id]
+                print "right ansewr was {}, checked {}".format(right_answer, checked_tiles)
+                if right_answer in checked_tiles:
+                    print "incrementing times_found_treasure"
+                    times_found_treasure += 1
+                    print "decision was {}".format(int(d.contents))
+                    if int(d.contents) == right_answer:
+                        print "incrementing times_chose_treasure"
+                        times_chose_treasure += 1
+
+        diff = times_found_treasure - times_chose_treasure
+        print "final score: {} {} {}".format(times_found_treasure, times_chose_treasure, diff)
+
+        return diff < 3
 
 
 class BanditGenerational(DiscreteGenerational):

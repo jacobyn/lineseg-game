@@ -24,7 +24,7 @@ def timenow():
 
 class TestBandits(object):
 
-    sandbox = True
+    sandbox = False
 
     if sandbox:
 
@@ -519,7 +519,18 @@ class TestBandits(object):
             print("Testing fitness...", end="\r")
             sys.stdout.flush()
 
-            print("Testing fitness...                   SKIPPED - no tests.")
+            for network in exp.networks():
+
+                agents = network.nodes(type=Agent)
+                sources = network.nodes(type=GeneticSource)
+
+                for agent in agents:
+                    assert isinstance(agent.fitness, float)
+
+                for source in sources:
+                    assert not isinstance(source.property4, float)
+
+            print("Testing fitness...                   done!")
             sys.stdout.flush()
 
             print("All tests passed: good job!")
