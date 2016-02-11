@@ -50,7 +50,7 @@ class BanditGame(Experiment):
         self.n_trials = 20
 
         # how many bandits there are
-        self.n_bandits = 5
+        self.n_bandits = 4
 
         # how many arms each bandit has
         self.n_options = 10
