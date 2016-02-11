@@ -101,7 +101,7 @@ pick_a_bandit = function () {
     }
 
     current_bandit_name = bandit_names[current_bandit];
-    name_of_image = '<img src="/static/images/flag_' + current_bandit_name + '.png"/>';
+    name_of_image = '<img src="/static/images/flag_' + current_bandit_name + '.png"/>  <img src="/static/images/' + current_bandit_name + '.png"/>';
     $("#flag_div").html(name_of_image);
     get_num_tiles();
 };
