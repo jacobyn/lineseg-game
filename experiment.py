@@ -200,7 +200,6 @@ class BanditGame(Experiment):
         return max(min(bonus, 1.0), 0.0)*self.bonus_payment
 
     def attention_check(self, participant):
-        print "running attention check"
         bandits = Bandit.query.all()
         nodes = BanditAgent.query.filter_by(participant_id=participant.uniqueid).all()
         pulls = []
@@ -213,25 +212,16 @@ class BanditGame(Experiment):
         times_found_treasure = 0
         times_chose_treasure = 0
 
-        print "there are {} decisions to process".format(len(final_decisions))
-
         for d in final_decisions:
             if d.remembered == "false":
-                print "bandit not remembered, getting extra info:"
-                assert len([b for b in bandits if b.network_id == d.network_id and b.bandit_id == d.bandit_id]) == 1
                 right_answer = [b for b in bandits if b.network_id == d.network_id and b.bandit_id == d.bandit_id][0].treasure_tile
                 checked_tiles = [int(c.contents) for c in checks if c.network_id == d.network_id and c.trial == d.trial]
-                print "right answer was {}, checked {}".format(right_answer, checked_tiles)
                 if right_answer in checked_tiles:
-                    print "incrementing times_found_treasure"
                     times_found_treasure += 1
-                    print "decision was {}".format(int(d.contents))
                     if int(d.contents) == right_answer:
-                        print "incrementing times_chose_treasure"
                         times_chose_treasure += 1
 
         diff = times_found_treasure - times_chose_treasure
-        print "final score: {} {} {}".format(times_found_treasure, times_chose_treasure, diff)
 
         return diff < 3
 
