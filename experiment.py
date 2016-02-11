@@ -218,7 +218,7 @@ class BanditGame(Experiment):
         for d in final_decisions:
             if d.remembered == "false":
                 print "bandit not remembered, getting extra info:"
-                assert len([b for b in bandits if b.network_id == d.network_id and b.bandit_id == d.bandit_id] == 1)
+                assert len([b for b in bandits if b.network_id == d.network_id and b.bandit_id == d.bandit_id]) == 1
                 right_answer = [b for b in bandits if b.network_id == d.network_id and b.bandit_id == d.bandit_id][0].treasure_tile
                 checked_tiles = [int(c.contents) for c in checks if c.network_id == d.network_id and c.trial == d.trial]
                 print "right answer was {}, checked {}".format(right_answer, checked_tiles)
