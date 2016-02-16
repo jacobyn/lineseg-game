@@ -4,8 +4,8 @@ mode = deploy
 auto_recruit = true
 
 [HIT Configuration]
-title = Treasure tiles
-description = Look for treasure under tiles, try to remember where it is
+title = Treasure hunt
+description = Look for treasure in different locations, try to remember where it is
 amt_keywords = Psychology, memory
 base_payment = 1.00
 lifetime = 24

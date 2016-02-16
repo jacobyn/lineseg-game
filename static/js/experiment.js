@@ -146,10 +146,10 @@ prepare_for_trial = function() {
             $(name_of_tile).html(name_of_image);
         }
         $("#mini_title").html("<p>You are looking for treasure in <b>" + current_bandit_name + "</b></p>");
-        $("#instructions").html("<p><font color='green'><b>You can check under " + my_curiosity + " tiles</b></font></p>");
+        $("#instructions").html("<p><font color='green'><b>You can check " + my_curiosity + " locations</b></font></p>");
     } else {
         $("#mini_title").html("<p>You are looking for treasure in <b>" + current_bandit_name + "</b> again</p>");
-        $("#instructions").html("<p><b><font color='red'>You have been here before so you cannot check under any more tiles.</font><br>Remember; the treasure is in the same place as before.<br>Please make your final choice of tile.</b></p>");
+        $("#instructions").html("<p><b><font color='red'>You have been here before so you cannot check any more locations.</font><br>Remember; the treasure is in the same place as before.<br>Please make your final choice.</b></p>");
         setTimeout(function() {prepare_for_decision();}, 500);
     }
 };
@@ -199,7 +199,7 @@ check_tile = function (tile) {
 prepare_for_decision = function () {
     decided = false;
     if (remember_bandit === false) {
-        $("#instructions").html("<p><b>Please make your final choice of tile.</b></p>");
+        $("#instructions").html("<p><b>Please make your final choice.</b></p>");
     }
     for (i = 0; i < num_tiles; i++) {
         name_of_tile = "#tile_" + (i+1);
