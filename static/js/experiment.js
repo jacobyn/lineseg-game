@@ -4,7 +4,8 @@ var trials_per_network;
 var trial_in_this_network = 0;
 var round_number = 0;
 var number_of_rounds;
-var available_bandit_names = ["England", "Burundi", "France", "Spain", "Portugal", "Germany", "Austria", "Poland", "Romania", "Ireland", "Italy", "Croatia", "Albania", "Bulgaria", "Morocco", "Libya", "Tunisia", "Egypt", "Iran", "Scotland", "Greece", "Turkey", "Sierra Leone", "Ghana", "Nigeria", "Mali", "Mozambique", "Ethiopia", "Chad", "Wales", "India", "Bangladesh", "Pakistan", "Afghanistan", "Australia", "New Zealand", "Tonga", "Papua New Guinea", "Fiji", "Thailand", "Laos", "Myanmar", "China", "Japan", "South Korea", "Mongolia", "Turkmenistan", "The United States", "Canada", "Greenland", "Mexico", "Guatemala", "Colombia", "Sri Lanka", "Brasil", "Argentina", "Chile", "Russia", "Ukraine", "Sweden", "Norway", "Finland", "Denmark", "Belgium", "Holland", "Senegal", "Botswana", "Madagascar", "Ecuador", "Costa Rica", "Nepal", "Yemen", "Gabon"];
+//var available_bandit_names = ["England", "Burundi", "France", "Spain", "Portugal", "Germany", "Austria", "Poland", "Romania", "Ireland", "Italy", "Croatia", "Albania", "Bulgaria", "Morocco", "Libya", "Tunisia", "Egypt", "Iran", "Scotland", "Greece", "Turkey", "Sierra Leone", "Ghana", "Nigeria", "Mali", "Mozambique", "Ethiopia", "Chad", "Wales", "India", "Bangladesh", "Pakistan", "Afghanistan", "Australia", "New Zealand", "Tonga", "Papua New Guinea", "Fiji", "Thailand", "Laos", "Myanmar", "China", "Japan", "South Korea", "Mongolia", "Turkmenistan", "The United States", "Canada", "Greenland", "Mexico", "Guatemala", "Colombia", "Sri Lanka", "Brasil", "Argentina", "Chile", "Russia", "Ukraine", "Sweden", "Norway", "Finland", "Denmark", "Belgium", "Holland", "Senegal", "Botswana", "Madagascar", "Ecuador", "Costa Rica", "Nepal", "Yemen", "Gabon"];
+var available_bandit_names = ["Burundi", "Burundi", "Burundi", "Burundi", "Burundi", "Burundi", "Burundi", "Burundi"];
 var bandit_names;
 
 // get all the details to correctly present the trial number bar
@@ -101,7 +102,7 @@ pick_a_bandit = function () {
     }
 
     current_bandit_name = bandit_names[current_bandit];
-    name_of_image = '<img src="/static/images/flag_' + current_bandit_name + '.png"/>  <img src="/static/images/' + current_bandit_name + '.png"/>';
+    name_of_image = '<img src="/static/images/locations/' + current_bandit_name + '/flag.png"/>';
     $("#flag_div").html(name_of_image);
     get_num_tiles();
 };
@@ -141,14 +142,14 @@ prepare_for_trial = function() {
     if (remember_bandit === false) {
         for (i = 0; i < num_tiles; i++) {
             name_of_tile = "#tile_" + (i+1);
-            name_of_image = '<img src="/static/images/tile_' + (i+1) + '.png" onClick="check_tile(' + (i+1) + ')"/>';
+            name_of_image = '<img src="/static/images/locations/' + current_bandit_name + '/' + (i+1) + '.png" onClick="check_tile(' + (i+1) + ')"/>';
             $(name_of_tile).html(name_of_image);
         }
-        $("#mini_title").html("<p>You are looking for treasure in " + current_bandit_name + "</p>");
-        $("#instructions").html("<p>You can check under " + my_curiosity + " tiles<br><br></p>");
+        $("#mini_title").html("<p>You are looking for treasure in <b>" + current_bandit_name + "</b></p>");
+        $("#instructions").html("<p><font color='green'><b>You can check under " + my_curiosity + " tiles</b></font></p>");
     } else {
-        $("#mini_title").html("<p>You are looking for treasure in " + current_bandit_name + " again</p>");
-        $("#instructions").html("<p>You have been here before so you cannot check under any more tiles.<br>Instead try to remember what you learned the last time you were here.<br>Please make your final choice of tile.</p>");
+        $("#mini_title").html("<p>You are looking for treasure in <b>" + current_bandit_name + "</b> again</p>");
+        $("#instructions").html("<p><b><font color='red'>You have been here before so you cannot check under any more tiles.</font><br>Remember; the treasure is in the same place as before.<br>Please make your final choice of tile.</b></p>");
         setTimeout(function() {prepare_for_decision();}, 500);
     }
 };
@@ -198,11 +199,11 @@ check_tile = function (tile) {
 prepare_for_decision = function () {
     decided = false;
     if (remember_bandit === false) {
-        $("#instructions").html("<p>Please make your final choice of tile.<br><br></p>");
+        $("#instructions").html("<p><b>Please make your final choice of tile.</b></p>");
     }
     for (i = 0; i < num_tiles; i++) {
         name_of_tile = "#tile_" + (i+1);
-        name_of_image = '<img src="/static/images/tile_' + (i+1) + '.png" onClick="choose_tile(' + (i+1) + ')"/>';
+        name_of_image = '<img src="/static/images/locations/' + current_bandit_name + '/' + (i+1) + '.png" onClick="choose_tile(' + (i+1) + ')"/>';
         $(name_of_tile).html(name_of_image);
     }
 };
