@@ -27,11 +27,11 @@ class BanditGame(Experiment):
         """ Wallace parameters """
         self.task = "The Bandit Game"
         self.verbose = True
-        self.experiment_repeats = 3
+        self.experiment_repeats = 1
         self.practice_repeats = 0
         self.agent = BanditAgent
-        self.generation_size = 10
-        self.generations = 10
+        self.generation_size = 1
+        self.generations = 1
         self.network = lambda: BanditGenerational(generations=self.generations,
                                                   generation_size=self.generation_size,
                                                   initial_source=True)
@@ -67,8 +67,8 @@ class BanditGame(Experiment):
         self.f_power_factor = 2
 
         # seed parameters
-        self.seed_memory = 1
-        self.seed_curiosity = 1
+        self.seed_memory = 5
+        self.seed_curiosity = 5
 
         if not self.networks():
             self.setup()
@@ -223,7 +223,7 @@ class BanditGame(Experiment):
 
         diff = times_found_treasure - times_chose_treasure
 
-        return diff < 3
+        return diff < 4
 
 
 class BanditGenerational(DiscreteGenerational):
