@@ -27,7 +27,7 @@ class BanditGame(Experiment):
         """ Wallace parameters """
         self.task = "The Bandit Game"
         self.verbose = True
-        self.experiment_repeats = 1
+        self.experiment_repeats = 3
         self.practice_repeats = 0
         self.agent = BanditAgent
         self.generation_size = 20
@@ -67,8 +67,8 @@ class BanditGame(Experiment):
         self.f_power_factor = 2
 
         # seed parameters
-        self.seed_memory = 5
-        self.seed_curiosity = 5
+        self.seed_memory = 2
+        self.seed_curiosity = 2
 
         if not self.networks():
             self.setup()
