@@ -27,15 +27,15 @@ class BanditGame(Experiment):
         """ Wallace parameters """
         self.task = "The Bandit Game"
         self.verbose = True
-        self.experiment_repeats = 3
+        self.experiment_repeats = 1
         self.practice_repeats = 0
         self.agent = BanditAgent
-        self.generation_size = 20
-        self.generations = 1
+        self.generation_size = 40
+        self.generations = 40
         self.network = lambda: BanditGenerational(generations=self.generations,
                                                   generation_size=self.generation_size,
                                                   initial_source=True)
-        self.bonus_payment = 1.0
+        self.bonus_payment = 0.5
         self.initial_recruitment_size = self.generation_size
         self.instruction_pages = ["instructions/instruct-1.html",
                                   "instructions/instruct-2.html",
@@ -64,7 +64,7 @@ class BanditGame(Experiment):
         # fitness affecting parameters
         self.f_min = 2
         self.f_scale_factor = 0.01
-        self.f_power_factor = 2
+        self.f_power_factor = 3
 
         # seed parameters
         self.seed_memory = 2
