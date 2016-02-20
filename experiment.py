@@ -195,9 +195,13 @@ class BanditGame(Experiment):
 
         total_trials = self.n_trials * self.experiment_repeats
 
-        bonus = round((total_score/(1.0*total_trials))/5.0, 2)
+        bonus = (total_score/(1.0*total_trials))/5.0
 
-        return max(min(bonus, 1.0), 0.0)*self.bonus_payment
+        bonus = max(min(bonus, 1.0), 0.0)*self.bonus_payment
+
+        bonus = round(bonus, 2)
+
+        return bonus
 
     def attention_check(self, participant):
         bandits = Bandit.query.all()
