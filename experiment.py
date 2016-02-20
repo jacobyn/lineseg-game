@@ -67,8 +67,8 @@ class BanditGame(Experiment):
         self.f_power_factor = 3
 
         # seed parameters
-        self.seed_memory = 2
-        self.seed_curiosity = 2
+        self.seed_memory = 1
+        self.seed_curiosity = 1
 
         if not self.networks():
             self.setup()
