@@ -66,7 +66,9 @@ class BanditGame(Experiment):
         self.f_scale_factor = 0.01
         self.f_power_factor = 3
 
-        # seed parameters
+        # genetic parameters
+        self.allow_memory = True
+        self.allow_curiosity = True
         self.seed_memory = 1
         self.seed_curiosity = 1
 
@@ -249,8 +251,14 @@ class GeneticSource(Source):
 
     def create_genes(self):
         exp = BanditGame(db.session)
-        MemoryGene(origin=self, contents=exp.seed_memory)
-        CuriosityGene(origin=self, contents=exp.seed_curiosity)
+        if exp.allow_memory:
+            MemoryGene(origin=self, contents=exp.seed_memory)
+        else:
+            MemoryGene(origin=self, contents=0)
+        if exp.allow_curiosity:
+            CuriosityGene(origin=self, contents=exp.seed_curiosity)
+        else:
+            CuriosityGene(origin=self, contents=1)
 
 
 class Bandit(Source):
@@ -301,10 +309,14 @@ class MemoryGene(Gene):
     __mapper_args__ = {"polymorphic_identity": "memory_gene"}
 
     def _mutated_contents(self):
-        if random.random() < 0.5:
-            return max([int(self.contents) + random.sample([-1, 1], 1)[0], 0])
+        exp = BanditGame(db.session)
+        if exp.allow_memory:
+            if random.random() < 0.5:
+                return max([int(self.contents) + random.sample([-1, 1], 1)[0], 0])
+            else:
+                return self.contents
         else:
-            return self.contents
+            return 0
 
 
 class CuriosityGene(Gene):
@@ -313,10 +325,14 @@ class CuriosityGene(Gene):
     __mapper_args__ = {"polymorphic_identity": "curiosity_gene"}
 
     def _mutated_contents(self):
-        if random.random() < 0.5:
-            return min([max([int(self.contents) + random.sample([-1, 1], 1)[0], 1]), 10])
+        exp = BanditGame(db.session)
+        if exp.allow_curiosity:
+            if random.random() < 0.5:
+                return min([max([int(self.contents) + random.sample([-1, 1], 1)[0], 1]), 10])
+            else:
+                return self.contents
         else:
-            return self.contents
+            return 1
 
 
 class Pull(Info):
