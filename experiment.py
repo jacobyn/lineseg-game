@@ -62,7 +62,7 @@ class BanditGame(Experiment):
         self.memory_cost = 2
 
         # fitness affecting parameters
-        self.f_min = 2
+        self.f_min = 10
         self.f_scale_factor = 0.01
         self.f_power_factor = 3
 
@@ -437,7 +437,9 @@ class BanditAgent(Agent):
         for d in my_decisions:
             bandit = [b for b in bandits if b.bandit_id == d.bandit_id][0]
             if int(d.contents) == bandit.treasure_tile:
-                fitness = fitness + (pulls-curiosity)
+                fitness += pulls
+            if d.remembered == "false":
+                fitness -= curiosity
 
         fitness = max([fitness, 0.0001])
         fitness = ((1.0*fitness)*exp.f_scale_factor)**exp.f_power_factor
