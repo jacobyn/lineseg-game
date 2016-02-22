@@ -229,7 +229,7 @@ class BanditGame(Experiment):
 
         diff = times_found_treasure - times_chose_treasure
 
-        return diff < 4
+        return diff < 3
 
 
 class BanditGenerational(DiscreteGenerational):
