@@ -64,7 +64,7 @@ class BanditGame(Experiment):
         # fitness affecting parameters
         self.f_min = 10
         self.f_scale_factor = 0.01
-        self.f_power_factor = 3
+        self.f_power_factor = 2
 
         # genetic parameters
         self.allow_memory = True
@@ -255,6 +255,7 @@ class GeneticSource(Source):
             MemoryGene(origin=self, contents=exp.seed_memory)
         else:
             MemoryGene(origin=self, contents=0)
+
         if exp.allow_curiosity:
             CuriosityGene(origin=self, contents=exp.seed_curiosity)
         else:
