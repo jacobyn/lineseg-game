@@ -24,12 +24,15 @@ def timenow():
 
 class TestBandits(object):
 
+    # run the tests online?
     sandbox = False
 
     if sandbox:
 
+        # how many bots to simulate?
         autobots = 20
 
+        # deploy to the sanbox
         sandbox_output = subprocess.check_output(
             "wallace sandbox",
             shell=True)
@@ -43,13 +46,15 @@ class TestBandits(object):
             "wallace logs --app " + exp_id,
             shell=True)
 
-        # methods that defines the behavior of each worker
+        # code that each bot runs
         def autobot(session, url, i):
 
+            # manually added delay to space bots out
             time.sleep(i*2)
             print("bot {} starting".format(i))
             start_time = timenow()
 
+            # generate a new id
             my_id = str(i) + ':' + str(i)
             current_trial = 0
 
@@ -81,11 +86,6 @@ class TestBandits(object):
             # work through the trials
             working = True
             while working is True:
-                agent = None
-                transmission = None
-                information = None
-                information2 = None
-                information3 = None
                 try:
                     # create_agent()
                     agent = session.post(url + '/node/' + my_id, headers=headers)
@@ -145,6 +145,7 @@ class TestBandits(object):
                                     }
                                     session.post(url + '/info/' + str(agent_id), headers=headers, data=data)
 
+                            # make final decision
                             if treasure_tile in tiles_to_check:
                                 final_choice = treasure_tile
                             else:
@@ -165,11 +166,6 @@ class TestBandits(object):
                     working = False
                     print("critical error for bot {}".format(i))
                     print("bot {} is on trial {}".format(i, current_trial))
-                    print("bot {} agent request: {}".format(i, agent))
-                    print("bot {} information request: {}".format(i, information))
-                    print("bot {} transmission request: {}".format(i, transmission))
-                    print("bot {} 2nd information request: {}".format(i, information2))
-                    print("bot {} 3rd information request: {}".format(i, information3))
                     traceback.print_exc()
 
             # go to debrief
@@ -200,6 +196,7 @@ class TestBandits(object):
                 t.start()
 
     else:
+        # do offline testing
 
         def setup(self):
             self.db = db.init_db(drop_all=True)
@@ -219,30 +216,33 @@ class TestBandits(object):
             """
 
             hit_id = str(random.random())
-
             overall_start_time = timenow()
 
             print("Running simulated experiment...", end="\r")
             sys.stdout.flush()
 
+            # initialize the experiment
             exp_setup_start = timenow()
             exp = BanditGame(self.db)
             exp_setup_stop = timenow()
 
+            # reload it for timing purposes
             exp_setup_start2 = timenow()
             exp = BanditGame(self.db)
             exp_setup_stop2 = timenow()
 
+            # variables to store timing data
             p_ids = []
             p_times = []
             dum = timenow()
             assign_time = dum - dum
             process_time = dum - dum
 
+            # while there is space
             while exp.networks(full=False):
 
+                # update the print out
                 num_completed_participants = len(exp.networks()[0].nodes(type=Agent))
-
                 if p_times:
                     print("Running simulated experiment... participant {} of {}, {} participants failed. Prev time: {}".format(
                         num_completed_participants+1,
@@ -258,6 +258,7 @@ class TestBandits(object):
                         end="\r")
                 sys.stdout.flush()
 
+                # generate a new participant
                 worker_id = str(random.random())
                 assignment_id = str(random.random())
                 from psiturk.models import Participant
@@ -268,15 +269,19 @@ class TestBandits(object):
                 p_ids.append(p_id)
                 p_start_time = timenow()
 
+                # apply for new nodes
                 while True:
                     assign_start_time = timenow()
+                    # get a network
                     network = exp.get_network_for_participant(participant_id=p_id)
                     if network is None:
                         break
                     else:
+                        # make a node
                         agent = exp.make_node_for_participant(
                             participant_id=p_id,
                             network=network)
+                        # add it to the network
                         exp.add_node_to_network(
                             participant_id=p_id,
                             node=agent,
@@ -285,36 +290,69 @@ class TestBandits(object):
                         assign_stop_time = timenow()
                         assign_time += (assign_stop_time - assign_start_time)
 
+                        # play the experiment
                         process_start_time = timenow()
 
+                        # get their genes
                         memory = int(agent.infos(type=MemoryGene)[0].contents)
                         curiosity = int(agent.infos(type=CuriosityGene)[0].contents)
+
+                        # variables to store memory
                         bandit_memory = []
+                        decision_memory = []
+
+                        # get all bandits
+                        bandits = Bandit.query.filter_by(network_id=agent.network_id).all()
+
+                        # play all trials
                         for trial in range(exp.n_trials):
-                            bandit_id = random.randint(0, exp.n_bandits-1)
-                            if memory > 0:
-                                remember_bandit = bandit_id in bandit_memory[-memory:]
-                                if remember_bandit:
-                                    remember_bandit = "true"
-                                else:
-                                    remember_bandit = "false"
+                            # pick a bandit
+                            bandit = random.sample(bandits, 1)[0]
+                            bandit_id = bandit.bandit_id
+
+                            # do they remember it?
+                            if memory > 0 and bandit_id in bandit_memory[-memory:]:
+                                remember_bandit = "true"
                             else:
                                 remember_bandit = "false"
+
+                            # if they dont, sample, then choose
                             if remember_bandit == "false":
+                                # which arms do they pull?
                                 vals = random.sample(range(1, exp.n_options + 1), curiosity)
+                                # pull them!
                                 for val in vals:
                                     pull = Pull(origin=agent, contents=val)
                                     pull.check = "true"
                                     pull.bandit_id = bandit_id
                                     pull.remembered = remember_bandit
                                     pull.trial = trial
-                            pull = Pull(origin=agent, contents=random.randint(1, exp.n_options))
+                                if int(bandit.treasure_tile) in vals:
+                                    # if you found the treasure, choose it!
+                                    decision = bandit.treasure_tile
+                                else:
+                                    # otherwise pick a random other arm
+                                    decision = random.sample([v for v in range(1, exp.n_options+1) if v not in vals], 1)[0]
+
+                            # if they do remember it read the memory and choose
+                            else:
+                                for k in range(len(bandit_memory)):
+                                    if bandit_memory[k] == bandit_id:
+                                        decision = decision_memory[k]
+                                # add a chance to misremember
+                                if random.random() < 0.3:
+                                    decision = random.randint(1, exp.n_options+1)
+                            # now commit that decision
+                            pull = Pull(origin=agent, contents=decision)
                             pull.check = "false"
                             pull.bandit_id = bandit_id
                             pull.remembered = remember_bandit
                             pull.trial = trial
                             bandit_memory.append(bandit_id)
+                            decision_memory.append(decision)
                         self.db.commit()
+
+                        # calculate fitness
                         agent.calculate_fitness()
                         self.db.commit()
                         process_stop_time = timenow()
@@ -543,11 +581,30 @@ class TestBandits(object):
             print("Experiment load: {}".format(exp_setup_stop2 - exp_setup_start2))
             print("Participant assignment: {}".format(assign_time))
             print("Participant processing: {}".format(process_time))
-            for i in range(len(p_times)):
-                if i == 0:
-                    total_time = p_times[i]
-                else:
-                    total_time += p_times[i]
-                print("Participant {}: {}, total: {}".format(i, p_times[i], total_time))
+            # for i in range(len(p_times)):
+            #     if i == 0:
+            #         total_time = p_times[i]
+            #     else:
+            #         total_time += p_times[i]
+            #     print("Participant {}: {}, total: {}".format(i, p_times[i], total_time))
 
             print("#########")
+
+            agents = BanditAgent.query.filter_by(failed=False).all()
+            memory_genes = MemoryGene.query.all()
+            curiosity_genes = CuriosityGene.query.all()
+
+            mean_memory = range(exp.generations)
+            mean_curiosity = range(exp.generations)
+
+            for generation in range(exp.generations):
+                generation_agents = [a for a in agents if int(a.property2) == generation]
+                generation_agents_ids = [a.id for a in generation_agents]
+                generation_memory = [int(m.contents) for m in memory_genes if m.origin_id in generation_agents_ids]
+                mean_memory[generation] = round(1.0*sum(generation_memory)/(1.0*len(generation_memory)), 2)
+                generation_curiosity = [int(c.contents) for c in curiosity_genes if c.origin_id in generation_agents_ids]
+                mean_curiosity[generation] = round(1.0*sum(generation_curiosity)/(1.0*len(generation_curiosity)), 2)
+
+            print(mean_curiosity)
+            print(mean_memory)
+
