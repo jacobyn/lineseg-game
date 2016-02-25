@@ -146,7 +146,7 @@ prepare_for_trial = function() {
     if (remember_bandit === false) {
         for (i = 0; i < num_arms; i++) {
             name_of_tile = "#tile_" + (i+1);
-            name_of_image = '<img src="/static/images/locations/' + current_bandit_name + '/' + bandit_mapping[current_bandit][i] + '.png" onClick="check_tile(' + (i+1) + ')"/>';
+            name_of_image = '<img src="/static/images/locations/' + current_bandit_name + '/' + (i+1) + '.png" onClick="check_tile(' + (i+1) + ')"/>';
             $(name_of_tile).html(name_of_image);
         }
         $("#mini_title").html("<p>You are looking for treasure in <b>" + current_bandit_name + "</b></p>");
@@ -176,7 +176,7 @@ check_tile = function (tile) {
                 method: 'post',
                 type: 'json',
                 data: {
-                    contents: tile,
+                    contents: bandit_mapping[current_bandit][tile-1],
                     info_type: "Pull",
                     property1: true, // check
                     property2: current_bandit, // bandit_id
@@ -186,7 +186,7 @@ check_tile = function (tile) {
                 },
             });
             name_of_tile = "#tile_" + tile;
-            if (tile == current_treasure_tile) {
+            if (bandit_mapping[current_bandit][tile-1] == good_arm) {
                 name_of_image = '<img src="/static/images/treasure.png"/>';
             } else {
                 name_of_image = '<img src="/static/images/no.png"/>';
