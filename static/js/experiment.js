@@ -7,6 +7,7 @@ var number_of_rounds;
 var available_bandit_names = ["Afghanistan", "Albania", "Argentina", "Australia", "Austria", "Bangladesh", "Belgium", "Botswana", "Brasil", "Bulgaria", "Burundi", "Canada", "Chad", "Chile", "China", "Colombia", "Costa Rica", "Croatia", "Denmark", "Ecuador", "Egypt", "England", "Ethiopia", "Fiji", "Finland", "France", "Gabon", "Germany", "Ghana", "Greece", "Greenland", "Guatemala", "Holland", "India", "Iran", "Ireland", "Italy", "Japan", "Laos", "Libya", "Madagascar", "Mali", "Mexico", "Mongolia", "Morocco", "Mozambique", "Myanmar", "Nepal", "New Zealand", "Nigeria", "Norway", "Pakistan", "Papua New Guinea", "Poland", "Portugal", "Romania", "Russia", "Scotland", "Senegal", "Sierra Leone", "South Korea", "Spain", "Sri Lanka", "Sweden", "Thailand", "The United States", "Tonga", "Tunisia", "Turkey", "Turkmenistan", "Ukraine", "Wales", "Yemen"];
 var bandit_names;
 var lock = false;
+bandit_mapping = [];
 
 // get all the details to correctly present the trial number bar
 get_num_trials = function() {
@@ -115,11 +116,10 @@ get_num_tiles = function() {
         type: 'json',
         success: function (resp) {
             num_tiles = resp.num_tiles;
-            get_treasure_tile();
-            bandit_mapping = [];
-            for (i = 0; i < num_bandits; i++) {
-                bandit_mapping[i] = new_mapping(num_tiles);
+            if (remember_bandit === false) {
+                bandit_mapping[current_bandit] = new_mapping(num_tiles);
             }
+            get_treasure_tile();
         }
     });
 };
