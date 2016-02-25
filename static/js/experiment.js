@@ -105,33 +105,33 @@ pick_a_bandit = function () {
     current_bandit_name = bandit_names[current_bandit];
     name_of_image = '<img src="/static/images/locations/' + current_bandit_name + '/flag.png"/>';
     $("#flag_div").html(name_of_image);
-    get_num_tiles();
+    get_num_arms();
 };
 
 // how many arms does my bandit have?
-get_num_tiles = function() {
+get_num_arms = function() {
     reqwest({
         url: "/num_arms/" + my_network_id + "/" + current_bandit,
         method: 'get',
         type: 'json',
         success: function (resp) {
-            num_tiles = resp.num_tiles;
+            num_arms = resp.num_arms;
             if (remember_bandit === false) {
-                bandit_mapping[current_bandit] = new_mapping(num_tiles);
+                bandit_mapping[current_bandit] = new_mapping(num_arms);
             }
-            get_treasure_tile();
+            get_good_arm();
         }
     });
 };
 
 // which is the good arm?
-get_treasure_tile = function() {
+get_good_arm = function() {
     reqwest({
-        url: "/treasure_tile/" + my_network_id + "/" + current_bandit,
+        url: "/good_arm/" + my_network_id + "/" + current_bandit,
         method: 'get',
         type: 'json',
         success: function (resp) {
-            current_treasure_tile = resp.treasure_tile;
+            good_arm = resp.good_arm;
             prepare_for_trial();
         }
     });
@@ -144,7 +144,7 @@ prepare_for_trial = function() {
 
     tiles_checked = 0;
     if (remember_bandit === false) {
-        for (i = 0; i < num_tiles; i++) {
+        for (i = 0; i < num_arms; i++) {
             name_of_tile = "#tile_" + (i+1);
             name_of_image = '<img src="/static/images/locations/' + current_bandit_name + '/' + bandit_mapping[current_bandit][i] + '.png" onClick="check_tile(' + (i+1) + ')"/>';
             $(name_of_tile).html(name_of_image);
@@ -181,17 +181,17 @@ check_tile = function (tile) {
                     property1: true, // check
                     property2: current_bandit, // bandit_id
                     property3: remember_bandit, // remembered
+                    property4: tile,
                     property5: trial_in_this_network
                 },
             });
             name_of_tile = "#tile_" + tile;
             if (tile == current_treasure_tile) {
                 name_of_image = '<img src="/static/images/treasure.png"/>';
-                $(name_of_tile).html(name_of_image);
             } else {
                 name_of_image = '<img src="/static/images/no.png"/>';
-                $(name_of_tile).html(name_of_image);
             }
+            $(name_of_tile).html(name_of_image);
             if (tiles_checked == my_curiosity) {
                 $("#instructions").html("<p>Please wait...<br><br>");
                 setTimeout(function() {
