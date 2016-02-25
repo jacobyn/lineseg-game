@@ -146,7 +146,7 @@ prepare_for_trial = function() {
     if (remember_bandit === false) {
         for (i = 0; i < num_tiles; i++) {
             name_of_tile = "#tile_" + (i+1);
-            name_of_image = '<img src="/static/images/locations/' + current_bandit_name + '/' + (i+1) + '.png" onClick="check_tile(' + (i+1) + ')"/>';
+            name_of_image = '<img src="/static/images/locations/' + current_bandit_name + '/' + bandit_mapping[current_bandit][i] + '.png" onClick="check_tile(' + (i+1) + ')"/>';
             $(name_of_tile).html(name_of_image);
         }
         $("#mini_title").html("<p>You are looking for treasure in <b>" + current_bandit_name + "</b></p>");
