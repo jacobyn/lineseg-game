@@ -94,7 +94,11 @@ get_num_bandits = function() {
 pick_a_bandit = function () {
     current_bandit = Math.floor(Math.random()*num_bandits);
 
-    remember_bandit = ($.inArray(current_bandit, bandit_memory.slice(bandit_memory.length - my_memory, bandit_memory.length)) > (-1));
+    if (my_memory > 0) {
+        remember_bandit = $.inArray(current_bandit, bandit_memory.slice(-my_memory)) > -1;
+    } else {
+        remember_bandit = false;
+    }
 
     if (remember_bandit === false) {
         index = Math.floor(Math.random()*available_bandit_names.length);
