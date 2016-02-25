@@ -1,5 +1,5 @@
 var tiles_checked = 0;
-var decided = false;
+var decided = true;
 var trials_per_network;
 var trial_in_this_network = 0;
 var round_number = 0;
@@ -154,7 +154,7 @@ prepare_for_trial = function() {
     } else {
         $("#mini_title").html("<p>You are looking for treasure in <b>" + current_bandit_name + "</b> again</p>");
         $("#instructions").html("<p><b><font color='red'>You have been here before so you cannot check any more locations.</font><br>Remember; the treasure is in the same place as before.<br>Please make your final choice.</b></p>");
-        setTimeout(function() {prepare_for_decision();}, 500);
+        setTimeout(function() {prepare_tiles_for_decision();}, 500);
     }
 };
 
@@ -195,7 +195,8 @@ check_tile = function (tile) {
             if (tiles_checked == my_curiosity) {
                 $("#instructions").html("<p>Please wait...<br><br>");
                 setTimeout(function() {
-                    prepare_for_decision();
+                    $("#instructions").html("<p><b>Please make your final choice.</b></p>");
+                    prepare_tiles_for_decision();
                 }, 500);
             }
         }
@@ -204,12 +205,9 @@ check_tile = function (tile) {
 };
 
 // prepare the tiles for the final decision
-prepare_for_decision = function () {
+prepare_tiles_for_decision = function () {
     decided = false;
-    if (remember_bandit === false) {
-        $("#instructions").html("<p><b>Please make your final choice.</b></p>");
-    }
-    for (i = 0; i < num_tiles; i++) {
+    for (i = 0; i < num_arms; i++) {
         name_of_tile = "#tile_" + (i+1);
         name_of_image = '<img src="/static/images/locations/' + current_bandit_name + '/' + (i+1) + '.png" onClick="choose_tile(' + (i+1) + ')"/>';
         $(name_of_tile).html(name_of_image);
