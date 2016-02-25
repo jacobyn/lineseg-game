@@ -116,6 +116,10 @@ get_num_tiles = function() {
         success: function (resp) {
             num_tiles = resp.num_tiles;
             get_treasure_tile();
+            bandit_mapping = [];
+            for (i = 0; i < num_bandits; i++) {
+                bandit_mapping[i] = new_mapping(num_tiles);
+            }
         }
     });
 };
@@ -282,4 +286,19 @@ show_warning = function () {
         $("#warning_div").hide();
         $("#table_div").show();
     }, 3500);
+};
+
+new_mapping = function (max) {
+    return shuffle(Array.apply(null, Array(max)).map(function (_, i) {return i+1;}));
+};
+
+shuffle = function(a) {
+    var j, x, i;
+    for (i = a.length; i; i -= 1) {
+        j = Math.floor(Math.random() * i);
+        x = a[i - 1];
+        a[i - 1] = a[j];
+        a[j] = x;
+    }
+    return a;
 };
