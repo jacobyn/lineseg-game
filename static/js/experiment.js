@@ -171,20 +171,7 @@ check_tile = function (tile) {
         lock = true;
         if (tiles_checked < my_curiosity) {
             tiles_checked = tiles_checked + 1;
-            reqwest({
-                url: "/info/" + my_node_id,
-                method: 'post',
-                type: 'json',
-                data: {
-                    contents: bandit_mapping[current_bandit][tile-1],
-                    info_type: "Pull",
-                    property1: true, // check
-                    property2: current_bandit, // bandit_id
-                    property3: remember_bandit, // remembered
-                    property4: tile,
-                    property5: trial_in_this_network
-                },
-            });
+            save_pull(tile, true);
             name_of_tile = "#tile_" + tile;
             if (bandit_mapping[current_bandit][tile-1] == good_arm) {
                 name_of_image = '<img src="/static/images/treasure.png"/>';
@@ -222,19 +209,7 @@ choose_tile = function (tile) {
             decided = true;
             $("#instructions").html("<p>Your decision is being saved, please wait...<br><br></p>");
             bandit_memory.push(current_bandit);
-            reqwest({
-                url: "/info/" + my_node_id,
-                method: 'post',
-                type: 'json',
-                data: {
-                    contents: tile,
-                    info_type: "Pull",
-                    property1: false, // check
-                    property2: current_bandit, // bandit_id
-                    property3: remember_bandit, // remembered
-                    property5: trial_in_this_network
-                },
-            });
+            save_pull(tile, false);
             name_of_tile = "#tile_" + tile;
             name_of_image = '<img src="/static/images/dot.png"/>';
             $(name_of_tile).html(name_of_image);
@@ -244,6 +219,23 @@ choose_tile = function (tile) {
         }
         lock = false;
     }
+};
+
+save_pull = function (tile, check) {
+    reqwest({
+        url: "/info/" + my_node_id,
+        method: 'post',
+        type: 'json',
+        data: {
+            contents: bandit_mapping[current_bandit][tile-1],
+            info_type: "Pull",
+            property1: check, // check
+            property2: current_bandit, // bandit_id
+            property3: remember_bandit, // remembered
+            property4: tile,
+            property5: trial_in_this_network
+        },
+    });
 };
 
 advance_to_next_trial = function () {
