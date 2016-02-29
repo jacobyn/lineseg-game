@@ -67,7 +67,7 @@ class BanditGame(Experiment):
         self.f_power_factor = 2
 
         # genetic parameters
-        self.allow_memory = True
+        self.allow_memory = False
         self.allow_curiosity = True
         self.seed_memory = 1
         self.seed_curiosity = 1
