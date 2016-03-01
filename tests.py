@@ -122,10 +122,10 @@ class TestBandits(object):
                                 remember_bandit = "false"
 
                             # get_num_tiles()
-                            num_tiles = session.get(url + '/num_arms/' + str(network_id) + '/' + str(current_bandit), headers=headers).json()['num_tiles']
+                            num_tiles = session.get(url + '/num_arms/' + str(network_id) + '/' + str(current_bandit), headers=headers).json()['num_arms']
 
                             # get_treasure_tile()
-                            treasure_tile = session.get(url + '/treasure_tile/' + str(network_id) + '/' + str(current_bandit), headers=headers).json()['treasure_tile']
+                            treasure_tile = session.get(url + '/good_arm/' + str(network_id) + '/' + str(current_bandit), headers=headers).json()['good_arm']
 
                             # prepare_for_trial
                             current_trial += 1
@@ -327,9 +327,9 @@ class TestBandits(object):
                                     pull.bandit_id = bandit_id
                                     pull.remembered = remember_bandit
                                     pull.trial = trial
-                                if int(bandit.treasure_tile) in vals:
+                                if int(bandit.good_arm) in vals:
                                     # if you found the treasure, choose it!
-                                    decision = bandit.treasure_tile
+                                    decision = bandit.good_arm
                                 else:
                                     # otherwise pick a random other arm
                                     decision = random.sample([v for v in range(1, exp.n_options+1) if v not in vals], 1)[0]
