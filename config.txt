@@ -1,19 +1,19 @@
 [Experiment Configuration]
-wallace_version = 0.5
+wallace_version = 0.7.0
 mode = deploy
 auto_recruit = true
 
 [HIT Configuration]
-title = Treasure hunt
-description = Look for treasure in different locations, try to remember where it is
+title = Line Game
+description = Click a line at the correct place
 amt_keywords = Psychology, memory
-base_payment = 0.50
+base_payment = 1.00
 lifetime = 24
-duration = 0.25
+duration = 0.4
 us_only = true
 approve_requirement = 95
-contact_email_on_error = thomas.j.h.morgan@gmail.com
-ad_group = TreasureTiles
+contact_email_on_error = jacoby@berkeley.edu
+ad_group = LineGame
 psiturk_keywords = memory
 organization_name = UC Berkeley
 browser_exclude_rule = MSIE, mobile, tablet
