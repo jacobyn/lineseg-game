@@ -1,5 +1,5 @@
 [Experiment Configuration]
-wallace_version = 0.7.0
+wallace_version = 0.9.2
 mode = deploy
 auto_recruit = true
 

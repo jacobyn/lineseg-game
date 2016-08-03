@@ -15,7 +15,6 @@ var err_time=undefined;
 var RANGE_MIN=12 // we cahnge it to imitate the UI, that allow some slack from both sides
 var RANGE_MAX=88
 
-
 // inputs:
 var TRUE_RATIO=NaN; // input
 var IS_FEEDBACK=false; //give feedback?
@@ -56,6 +55,7 @@ function print_gen() {
     }
 }
 
+
 function create_agent () {
     if (DEBUG) {
         console.log ("(1) trial:" + current_trial + " repeats:" + repeats + " function: " + "create_agent");
@@ -73,7 +73,7 @@ function create_agent () {
         type: 'json',
         success: function (resp) {
             if (DEBUG) {
-               console.log ("--->(1) trial:" + current_trial + " repeats:" + repeats + " reqwest: " + "node");
+               console.log ("--->(1) trial:" + current_trial + " repeats:" + repeats + " reqwest: " + "node" + + "__ participant_id" + participant_id);
             }
 
             my_node_id = resp.node.id;
@@ -96,7 +96,7 @@ function create_agent () {
 
 function getIsPractice() {
     if (DEBUG) {
-        console.log ("(2) trial:" + current_trial + " repeats:" + repeats + " function: " + "getIsPractice");
+        console.log ("(2) trial:" + current_trial + " repeats:" + repeats + " function: " + "getIsPractice" );
     }
    reqwest ({
     url: "/is_practice/" + my_network_id,

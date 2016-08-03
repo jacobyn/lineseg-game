@@ -1,4 +1,4 @@
-""" The Lineseg Game! """
+""" The Vision Game with Thomas Langlois and Nori Jacoby"""
 """ config for duration of the experiment"""
 
 from wallace.experiments import Experiment
@@ -19,69 +19,16 @@ from wallace import db
 config = PsiturkConfig()
 from datetime import datetime
 
-class LineGame(Experiment):
+def list_to_float_array(mystr):
+    temp=mystr.replace('[','').replace(']','')
+    return [float(x) for x in temp.split(',')]
+
+
+class VisionGame(Experiment):
 
     def __init__(self, session):
-        super(LineGame, self).__init__(session)
-        self.N_network_size=5
-        self.N_network_size_practice=3
-        self.K_repeats_size=3
-        self.K_repeats_size_practice=3
-        self.M_length=4
+        super(VisionGame, self).__init__(session)
 
-        self.N_network_size=10
-        self.N_network_size_practice=5
-        self.K_repeats_size=4
-        self.K_repeats_size_practice=4
-        self.M_length=5
-
-        #these parameters require about 40 subjects with 10 min participation time (need to check how much it takes to run these parameters)
-        # self.N_network_size=300
-        # self.N_network_size_practice=30
-        # self.K_repeats_size=100
-        # self.K_repeats_size_practice=10
-        # self.M_length=10
-
-        # 3 min ~ 15 participants, 0.5 base payment 0.5 bonus
-        ## RUN 5 apr
-        # self.N_network_size=20
-        # self.N_network_size_practice=20
-        # self.K_repeats_size=10
-        # self.K_repeats_size_practice=5
-        # self.M_length=5
-        # self.bonus_payment = 0.5
-
-
-        # this takes about 20 minutes to play!
-        ## RUN 9 apr and it worked!!
-        # self.N_network_size=300
-        # self.N_network_size_practice=30
-        # self.K_repeats_size=100
-        # self.K_repeats_size_practice=10
-        # self.M_length=10
-        # self.bonus_payment = 2.00
-
-        #run good on 12 apr morning: range limit about 10 min to play, shoerter network try to run apr 12 with v.0.6.0
-        # self.N_network_size=200
-        # self.N_network_size_practice=40
-        # self.K_repeats_size=50
-        # self.K_repeats_size_practice=15
-        # self.M_length=5
-        # self.bonus_payment = 1.0
-
-        # self.range_min=15
-        # self.range_max=85
-
-        #some more minor changes. RUN APR 12
-        # self.N_network_size=200
-        # self.N_network_size_practice=40
-        # self.K_repeats_size=70
-        # self.K_repeats_size_practice=10
-        # self.M_length=10
-        # self.bonus_payment = 1.0
-
-        #self.range_min=15
-        #self.range_max=85
 
         self.N_network_size=20
         self.N_network_size_practice=20
@@ -89,42 +36,57 @@ class LineGame(Experiment):
         self.K_repeats_size_practice=5
         self.M_length=5
         self.bonus_payment = 0.5
-        self.range_min=15
-        self.range_max=85
+
+        #experiment specific params
+        range_min=[0., 0.]
+        range_max=[1., 1.]
+        my_dimensions=2
 
 
 
-        self.Percent_attention_trials=200.0 #number of failed trials should be a bout 2x than the number of trials hence 200%
-        self.Percent_failed_nodes= 90 #number of trials that can fail from all reasons (for example 95% means subject wasn't listening 95% of the time and this would fail all his data)
+        ### ---> TAKECARE
+        self.params= {"my_dimensions":my_dimensions,"range_min":range_min, "range_max":range_max}
+
+        Percent_attention_trials=200.0 #number of failed trials should be a bout 2x than the number of trials hence 200%
+        Percent_failed_nodes= 90 #number of trials that can fail from all reasons (for example 95% means subject wasn't listening 95% of the time and this would fail all his data)
         #self.Percent_failed_nodes= 25 #changed it to 25% becuase almost always subject are very good and make very few mistakes -- I TRIED THIS IS IS DANGEROUS BECAUSE OTHER NODES IMIDIATELY START FAIL...
-        self.UI_PROX_T= 11
-
 
         """ Wallace parameters """
-        self.task = "The Line Game"
+        self.task = "The Visual Memory Game"
         self.verbose = False
         self.experiment_repeats = self.N_network_size  # N number of chains
         self.practice_repeats = self.N_network_size_practice    # N number of chains for practice
         self.K_all_trials=self.K_repeats_size+self.K_repeats_size_practice
-        self.agent = LineAgent
-        self.network = lambda: MultiChain(max_size=self.M_length)
+        #self.agent = VisionAgent
+        #self.network = lambda: MultiChain(max_size=self.M_length)
 
         self.initial_recruitment_size = 10 # initital recuriemnt size (number of participants initally recruited) ##IMPORTANT THIS SHOULD BE more than 10 becuase if not you only have 10 subjects.
+
+        # this should be removed and taken care in the UI
         self.instruction_pages = ["instructions/instruct-1.html",
                                   "instructions/instruct-2.html",
                                   "instructions/instruct-3.html",
                                   "instructions/instruct-4.html",
                                   "instructions/instruct-5.html"]
+        # this should be removed and taken care in the UI
         self.debrief_pages = ["debriefing/debrief-1.html"]
-        self.known_classes["LineInfo"] = LineInfo
-        self.known_classes["LineSource"] = LineSource
-
-
+        self.known_classes["VisionInfo"] = VisionInfo
+        self.known_classes["VisionSource"] = VisionSource
 
 
         if not self.networks():
             self.setup()
         self.save()
+
+#depricated:
+#    def node_type(self, network):
+#        return VisionAgent
+    def create_node(self, network, participant):
+        return VisionAgent(network=network, participant=participant)
+
+    def create_network(self):
+       """Return a new network."""
+       return MultiChain(max_size=self.M_length)
 
     def get_network_for_participant (self, participant):
         # get the participants nodes
@@ -169,24 +131,31 @@ class LineGame(Experiment):
         return chosen_network
 
     def node_post_request(self, participant, node):
-        node.neighbors(connection="from")[0].transmit()
+        #node.neighbors(connection="from")[0].transmit()
+        node.neighbors(direction="from")[0].transmit()
         node.receive()
 
     def info_post_request(self, node, info):
         try:
-            res = int(info.contents)
+            res = str(info.contents)
+            if res=='Nan':
+                node.fail()
+            else:
+                result_as_float_arrray=list_to_float_array(res)
+                assert(self.params["my_dimensions"]==len(result_as_float_arrray))
+
         except:
             node.fail()
         node.network.open = True
 
 
     def setup(self):
-        super(LineGame, self).setup()
+        super(VisionGame, self).setup()
         for net in self.networks():
             if net.role == "practice":
                 net.max_size = 500
-            source = LineSource(network=net)
-            source.create_pattern(self.range_min, self.range_max)
+            source = VisionSource(network=net)
+            source.create_pattern(self.params)
             source.generation = 0
             net.open = True
 
@@ -213,7 +182,7 @@ class LineGame(Experiment):
     def data_check(self, participant):
               # get the necessary data
         networks = Network.query.all()
-        nodes = LineAgent.query.filter_by(participant_id=participant.id, failed=False).all()
+        nodes = VisionAgent.query.filter_by(participant_id=participant.id, failed=False).all()
         node_ids = [n.id for n in nodes]
         incoming_vectors = Vector.query.filter(Vector.destination_id.in_(node_ids)).all()
         outgoing_vectors = Vector.query.filter(Vector.origin_id.in_(node_ids)).all()
@@ -221,7 +190,7 @@ class LineGame(Experiment):
         try:
             # 1 source node per network
             for net in networks:
-                sources = net.nodes(type=LineSource)
+                sources = net.nodes(type=VisionSource)
                 assert len(sources) == 1
                  # only one source for every network
 
@@ -236,7 +205,7 @@ class LineGame(Experiment):
                     node.fail()
 
                 ## not failed nodes???? PERHAPS FILTER HERE OVER NOT FAILED NODES? IS IT AUDIO?
-                infos =  node.infos(LineInfo)
+                infos =  node.infos(VisionInfo)
                 #print ([type(i) for i in  infos])
                 ################### NORI #################
                 ###original:
@@ -246,19 +215,36 @@ class LineGame(Experiment):
                     node.fail()
                 else:
                     info=infos[0]
-                    ResponseRatio=info.contents
-                    TrueRatio=info.true_seed
-                    is_numeric = False
-                    try:
-                        ResponseRatio=int(info.contents)
-                        is_numeric = True
-                    except:
-                        pass
 
-                    if is_numeric:
-                        assert (abs(ResponseRatio-TrueRatio)<=self.UI_PROX_T)
-                    else:
-                        assert (ResponseRatio=='NaN')
+                    response=info.contents
+                    dim=self.params.my_dimensions
+
+                    if not response=='NaN':
+                        response_as_float_array=list_to_float_array(response)
+                        response_len=len(response_as_float_array)
+                        if not response_len==dim:
+                            print "error in data check len of response: {} was wrong: {} dimensions: {}".format(response,response_len,dim)
+                        assert(response_len==dim)
+                        for i in range(response_len):
+                            v=response_as_float_array[i]
+                            range_min=self.params.range_min[i]
+                            range_max=self.params.range_max[i]
+                            assert(v>=range_min)
+                            assert(v<=range_max)
+
+                    # ResponseRatio=info.contents
+                    # TrueRatio=info.true_seed
+                    # is_numeric = False
+                    # try:
+                    #     ResponseRatio=int(info.contents)
+                    #     is_numeric = True
+                    # except:
+                    #     pass
+
+                    # if is_numeric:
+                    #     assert (abs(ResponseRatio-TrueRatio)<=self.UI_PROX_T)
+                    # else:
+                    #     assert (ResponseRatio=='NaN')
 
                     try:
                         assert len(node.transmissions(direction="all", status="pending")) == 0
@@ -281,13 +267,13 @@ class LineGame(Experiment):
         overall_attempts=0;
         failed_nodes=0;
         not_good_trials=0;
-        nodes = LineAgent.query.filter_by(participant_id=participant.id).all()
+        nodes = VisionAgent.query.filter_by(participant_id=participant.id).all()
         for node in nodes:
             if node.failed:
                 failed_nodes+=1
                 tried_attempts+=1
             else:
-#                infos = node.infos(type=LineInfo)
+#                infos = node.infos(type=VisionInfo)
                 infos = node.infos()
                 for info in infos:
                     tried_attempts+=1
@@ -351,12 +337,12 @@ class LineGame(Experiment):
         tried_attempts=0
         tried_trials=0
         failed_nodes=0;
-        nodes = LineAgent.query.filter_by(participant_id=participant.id).all()
+        nodes = VisionAgent.query.filter_by(participant_id=participant.id).all()
         for node in nodes:
             if node.failed:
                 failed_nodes+=1
             else:
-                infos =  node.infos(type=LineInfo)
+                infos =  node.infos(type=VisionInfo)
                 for info in infos:
                      tried_attempts+=info.num_attempts
                      tried_trials+=1
@@ -383,22 +369,26 @@ class LineGame(Experiment):
 ########################### NORIHERE ################################
 
 ########################### NORIHERE ################################
-class LineInfo(Info):
+class VisionInfo(Info):
 
-#    __mapper_args__ = {"polymorphic_identity": "bandit_agent"}
-    __mapper_args__ = {"polymorphic_identity": "line_info"}
+    __mapper_args__ = {"polymorphic_identity": "vision_info"}
 
     @hybrid_property
-    def num_attempts(self):
-        return int(self.property1)
+    def seed(self):
+        try:
+            val=str(self.property1)
+        except:
+            val=self.property1
+        return val
 
-    @num_attempts.setter
-    def num_attempts(self, my_num_attempts):
-        self.property1 = repr(my_num_attempts)
+    @seed.setter
+    def seed(self, my_seed):
+        self.property1 = repr(my_seed)
 
-    @num_attempts.expression
-    def num_attempts(self):
-        return cast(self.property1, Integer)
+    @seed.expression
+    def seed(self):
+        return repr(self.property1)
+
 
 
     @hybrid_property
@@ -414,48 +404,21 @@ class LineInfo(Info):
         return cast(self.property2, Float)
 
 
-    @hybrid_property
-    def true_seed(self):
-        try:
-            val=int(self.property3)
-        except:
-            val=self.property3
-        return val
-
-    @true_seed.setter
-    def true_seed(self, my_true_seed):
-        self.property3 = repr(my_true_seed)
-
-    @true_seed.expression
-    def true_seed(self):
-        return cast(self.property3, Integer)
-
-    @hybrid_property
-    def result_list(self):
-        return self.property4
-
-    @result_list.setter
-    def result_list(self, my_result_list):
-        self.property4 = repr(my_result_list)
-
-    @result_list.expression
-    def result_list(self):
-        return repr(self.property4)
 
     @hybrid_property
     def generation(self):
         if self.property5:
-            return int(self.property5)
+            return int(self.property3)
         else:
             return 0
 
     @generation.setter
     def generation(self, my_generation):
-        self.property5 = repr(my_generation)
+        self.property3 = repr(my_generation)
 
     @generation.expression
     def generation(self):
-        return cast(self.property5, Integer)
+        return cast(self.property3, Integer)
 
 
 
@@ -490,7 +453,7 @@ class MultiChain(Chain):
             previous_generation=0
         newcomer.generation = previous_generation
 
-class LineSource(Source):
+class VisionSource(Source):
     """ A source that initializes the pattern of the first generation """
 
     @hybrid_property
@@ -507,17 +470,29 @@ class LineSource(Source):
     def generation(self):
         return cast(self.property1, Integer)
 
-    __mapper_args__ = {"polymorphic_identity": "line_source"}
+    __mapper_args__ = {"polymorphic_identity": "vision_source"}
 
     def _what(self):
-        return LineInfo
+        return VisionInfo
 
-    def create_pattern(self, range_min, range_max):
-        #LineInfo(origin=self, contents=random.randint(0,100));
-        LineInfo(origin=self, contents=random.randint(range_min,range_max));
+    def create_pattern(self, params):
+        #VisionInfo(origin=self, contents=random.randint(0,100));
+        mydimensions=len(params['range_min'])
+        assert(mydimensions==params['my_dimensions'])
+        range_max=params['range_max']
+        range_min=params['range_min']
+
+        assert(len(range_max)==len(range_min))
+
+        seed=[]
+        for i in range(mydimensions):
+            seed.append(random.random()*(range_max[i]-range_min[i])+range_min[i])
+
+        assert(len(seed)==mydimensions)
+        VisionInfo(origin=self, contents=str(seed))
 
 
-class LineAgent(Agent):
+class VisionAgent(Agent):
     def fail(self, vectors=True, infos=True, transmissions=True, transformations=True):
         """
         Fail a node, setting its status to "failed".
@@ -572,531 +547,94 @@ class LineAgent(Agent):
     def generation(self):
         return cast(self.property1, Integer)
 
-
-
-    __mapper_args__ = {"polymorphic_identity": "line_agent"}
+    __mapper_args__ = {"polymorphic_identity": "vision_agent"}
 
     def _what(self):
-        return LineInfo
-
-
-
+        return VisionInfo
 
 extra_routes = Blueprint(
     'extra_routes', __name__,
     template_folder='templates',
     static_folder='static')
 
+@extra_routes.route("/get_trial_params/<int:node_id>/<int:participant_id>", methods=["GET"])
+def get_trial_params(node_id,participant_id):
+    exp = VisionGame(db.session)
+    node = VisionAgent.query.get(node_id)
 
-# @extra_routes.route("/node/<int:node_id>/calculate_fitness", methods=["GET"])
-# def calculate_fitness(node_id):
+    #net=node.network_id
+    #net=Network.query.get(network_id)
 
-#     exp = BanditGame(db.session)
-#     node = BanditAgent.query.get(node_id)
-#     if node is None:
-#         exp.log("Error: /node/{}/calculate_fitness, node {} does not exist".format(node_id))
-#         page = exp.error_page(error_type="/node/calculate_fitness, node does not exist")
-#         js = dumps({"status": "error", "html": page})
-#         return Response(js, status=400, mimetype='application/json')
-
-#     node.calculate_fitness()
-#     exp.save()
-
-#     data = {"status": "success"}
-#     return Response(dumps(data), status=200, mimetype='application/json')
-
-
-# @extra_routes.route("/num_trials", methods=["GET"])
-# def get_num_trials():
-#     exp = BanditGame(db.session)
-#     data = {"status": "success",
-#             "experiment_repeats": exp.experiment_repeats,
-#             "practice_repeats": exp.practice_repeats,
-#             "n_trials": exp.n_trials}
-#     return Response(dumps(data), status=200, mimetype='application/json')
-
-
-# @extra_routes.route("/num_bandits", methods=["GET"])
-# def get_num_bandits():
-#     exp = BanditGame(db.session)
-#     data = {"status": "success", "num_bandits": exp.n_bandits}
-#     return Response(dumps(data), status=200, mimetype='application/json')
-
-
-# @extra_routes.route("/num_arms/<int:network_id>/<int:bandit_id>", methods=["GET"])
-# def get_num_arms(network_id, bandit_id):
-#     bandit = Bandit.query.filter_by(network_id=network_id, bandit_id=bandit_id).one()
-#     data = {"status": "success", "num_arms": bandit.num_arms}
-#     return Response(dumps(data), status=200, mimetype='application/json')
-
-
-# @extra_routes.route("/good_arm/<int:network_id>/<int:bandit_id>", methods=["GET"])
-# def good_arm(network_id, bandit_id):
-#     bandit = Bandit.query.filter_by(network_id=network_id, bandit_id=bandit_id).one()
-#     data = {"status": "success", "good_arm": bandit.good_arm}
-#     return Response(dumps(data), status=200, mimetype='application/json')
-
-
-# @extra_routes.route("/consent", methods=["GET"])
-# def get_consent():
-#     return return_page('consent.html', request)
-
-@extra_routes.route("/is_practice/<int:network_id>", methods=["GET"])
-def get_is_practice(network_id):
-#    exp = LineGame(db.session)
-    net=Network.query.get(network_id)
-    data = {"status": "success", "is_practice": net.role == "practice"}
-    return Response(dumps(data), status=200, mimetype='application/json')
-
-
-@extra_routes.route("/trial_number_string/<int:node_id>/<int:participant_id>", methods=["GET"])
-def get_trial_number_string(node_id,participant_id):
-    exp = LineGame(db.session)
-    node = LineAgent.query.get(node_id)
     participants = Participant.query.filter_by(id=participant_id).all()
+    participant=participants[0]
     bonus=exp.bonus(participants[0])
-
-    exp.log("/trial_number_string GET request. Params: node_id: {}."
-            .format(node_id))
-
-    # check the node exists for the current particiapnt
-    nodes = len(LineAgent.query.filter_by(participant_id=node.participant_id).all())
-    all_trials=exp.K_all_trials
-
-    if node is None:
-        exp.log("Error: /trial_number_string/{}, node {} does not exist".format(node_id, node_id))
-        page = error_page(error_type="/trial_number_string, node does not exist")
-        js = dumps({"status": "error", "html": page})
-        return Response(js, status=400, mimetype='application/json')
-
+    exp.log("/get_trial_params: node_id: {} participant_id:{}".format(node_id,participant_id))
     # return the data
-    data = str(nodes) + " / " + str(all_trials) + ". Estimated bonus so far: " + str(bonus) + "$"
-    data = {"status": "success", "trial_str": data, "generation": node.generation}
-    exp.log("/trial_number_string GET request successful.")
+
+    target_src = "https://s3.amazonaws.com/thomas-nori-projects/dot.png"
+    bcgrd_src = "https://s3.amazonaws.com/thomas-nori-projects/Circle.png"
+    pres_time = 3000
+    fix_time = 1000
+    margin_error_x = 0.05
+    margin_error_y = 0.05
+    delta_x = 0.0
+    delta_y = 0.0
+
+    raw_data=dict()
+    raw_data['target_src']=target_src
+    raw_data['bcgrd_src']=bcgrd_src
+    raw_data['pres_time']=pres_time
+    raw_data['margin_error_x']=margin_error_x
+    raw_data['margin_error_y']=margin_error_y
+    raw_data['delta_x']=delta_x
+    raw_data['delta_y']=delta_y
+
+
+    data = dumps(raw_data)
+    print "debug-----------\n----------\n"
+    print node
+    print "debug-----------\n----------\n"
+    data = {"status": "success", "trial_params": data, "generation": node.generation}
     js = dumps(data, default=date_handler)
     return Response(js, status=200, mimetype='application/json')
 
-# HERE!!!
-# @extra_routes.route("/trial_number_string/<int:node_id>/<worker_id>", methods=["GET"])
-# def get_status_all(node_id,worker_id):
-#     exp = LineGame(db.session)
-#     node = Agent.query.get(node_id)
-#     participants = Participant.query.filter_by(workerid=worker_id).all()
+
+
+# @extra_routes.route("/is_practice/<int:network_id>", methods=["GET"])
+# def get_is_practice(network_id):
+# #    exp = VisionGame(db.session)
+#     net=Network.query.get(network_id)
+#     data = {"status": "success", "is_practice": net.role == "practice"}
+#     return Response(dumps(data), status=200, mimetype='application/json')
+
+
+# @extra_routes.route("/trial_number_string/<int:node_id>/<int:participant_id>", methods=["GET"])
+# def get_trial_number_string(node_id,participant_id):
+#     exp = VisionGame(db.session)
+#     node = LineAgent.query.get(node_id)
+#     participants = Participant.query.filter_by(id=participant_id).all()
 #     bonus=exp.bonus(participants[0])
 
 #     exp.log("/trial_number_string GET request. Params: node_id: {}."
 #             .format(node_id))
 
- # print("Testing infos...", end="\r")
- #            sys.stdout.flush()
+#     # check the node exists for the current particiapnt
+#     nodes = len(LineAgent.query.filter_by(participant_id=node.participant_id).all())
+#     all_trials=exp.K_all_trials
 
- #            for network in exp.networks():
+#     if node is None:
+#         exp.log("Error: /trial_number_string/{}, node {} does not exist".format(node_id, node_id))
+#         page = error_page(error_type="/trial_number_string, node does not exist")
+#         js = dumps({"status": "error", "html": page})
+#         return Response(js, status=400, mimetype='application/json')
 
- #                agents = network.nodes(type=Agent)
- #                source = network.nodes(type=Source)[0]
+#     # return the data
+#     data = str(nodes) + " / " + str(all_trials) + ". Estimated bonus so far: " + str(bonus) + "$"
+#     data = {"status": "success", "trial_str": data, "generation": node.generation}
+#     exp.log("/trial_number_string GET request successful.")
+#     js = dumps(data, default=date_handler)
+#     return Response(js, status=200, mimetype='application/json')
 
- #                assert len(source.infos()) == 1
-
-
- #            #     for bandit in bandits:
- #            #         assert len(bandit.infos()) == 0
-
- #                for agent in agents:
- #                    infos =  agent.infos()
- #                    assert len(infos) == 1
- #                    info=infos[0]
- #                    true_seed=info.true_seed
- #                    try:
- #                        contents=int(info.contents)
- #                    except:
- #                        assert (contents=='NaN')
- #                    else:
- #                        assert (abs(contents-true_seed)<exp.UI_PROX_T)
-
-
-
-
-# @extra_routes.route("/instructions/<int:page>", methods=["GET"])
-# def get_instructions(page):
-#     exp = LineGame(db.session)
-#     return return_page(exp.instruction_pages[page-1], request)
-
-
-# @extra_routes.route("/debrief/<int:page>", methods=["GET"])
-# def get_debrief(page):
-#     exp = LineGame(db.session)
-#     return return_page(exp.debrief_pages[page-1], request)
-
-
-# @extra_routes.route("/stage", methods=["GET"])
-# def get_stage():
-#     return return_page('stage.html', request)
-
-
-
-# @extra_routes.route("/participant/<worker_id>/<hit_id>/<assignment_id>", methods=["POST"])
-# def create_participant(worker_id, hit_id, assignment_id):
-#     exp = LineGame(db.session)
-
-#     parts = Participant.query.filter_by(workerid=worker_id).all()
-#     if parts:
-#         print "participant already exists!"
-#         return Response(status=200)
-
-#     p = Participant(workerid=worker_id, assignmentid=assignment_id, hitid=hit_id)
-#     exp.save(p)
-#     return Response(status=200)
-
-
-#@extra_routes.route("/dashboard/<int:number_of_participants_to_check>/<int:number_of_current_participants>", methods=["GET"])
-#def dashboard(number_of_participants_to_check,number_of_current_participants):
-@extra_routes.route("/dashboard", methods=["GET"])
-def dashboard():
-    number_of_participants_to_check = 0 # Everybody!
-    number_of_current_participants = 10  #highlight the last 10 participant
-    try:
-        exp = LineGame(db.session) #ge the experiment's basics
-        networks = exp.networks()
-        participants = Participant.query.all()
-        print("participants:")
-        print participants
-
-      # find the last participants that played
-        dates={p.creation_time:p for p in participants}
-        sorted_dates_tuples=sorted(dates.items())
-        # check that number_of_participants_to_check
-        if number_of_participants_to_check==0:
-            number_of_participants_to_check= len(sorted_dates_tuples)
-        my_num_parts= min ([number_of_participants_to_check, len(sorted_dates_tuples) ])
-        if number_of_current_participants==0:
-            number_of_current_participants=1;
-        number_of_current_participants=min([number_of_current_participants,my_num_parts])
-
-        selected_participants_ids=[k[1].id for k in sorted_dates_tuples[(-my_num_parts):]] #this the partcipants that we are going to look for
-        current_participants_ids=[k[1].id for k in sorted_dates_tuples[(-number_of_current_participants):]] #these are the very last participants
-
-        #print("select participants:")
-        #print selected_participants_ids
-        #print("current_participants_ids:")
-        #print current_participants_ids
-
-        chain_dic = dict([(n.id,n.size(type=LineAgent)) for n in networks])
-        chain_list= [ chain_dic[k] for k in chain_dic.keys()]
-
-        chain_dic_role = dict([(n.id,n.role) for n in networks])
-        chain_list_role = [ chain_dic_role[k] for k in chain_dic_role.keys()]
-        chain_list_role_s = ["e" if r=="experiment" else "p" for r in chain_list_role]
-
-        chain_dic_failed = dict([(n.id,n.size(type=None, failed=True)) for n in networks])
-        chain_list_failed= [ chain_dic_failed[k] for k in chain_dic_failed.keys()]
-
-        dates={p.creation_time:p for p in participants}
-        sorted_dates_tuples=sorted(dates.items())
-        selected_participants_bonus=sum([k[1].bonus for k in sorted_dates_tuples[(-my_num_parts):] if k[1].bonus is not None])
-        all_participants_bonus=sum([k[1].bonus for k in sorted_dates_tuples if k[1].bonus is not None])
-
-        all_chain_length=sum(chain_list)
-        min_chain_length=min(chain_list)
-        max_chain_length=max(chain_list)
-        num_failed_nodes=len(Node.query.filter_by(failed=True).all())
-        selected_participants_num=len(selected_participants_ids)
-
-        summary={"all_bonus": all_participants_bonus, "selected_part_num": selected_participants_num, "selected_part_bonus": selected_participants_bonus, "all_chain_length": all_chain_length, "max_chain_length":max_chain_length, "min_chain_length": min_chain_length, "num_failed_nodes": num_failed_nodes, "all_chain_lengths": str(chain_list), "all_chain_lengths_failed": str(chain_list_failed), "chain_list_role_s": chain_list_role_s}
-
-        summary_node_dict={} # create empty dict for all chains that selected participant paticipated with
-        summary_node_dict_fail=dict([(p,{}) for p in selected_participants_ids]) #create an empty dict for all failed participants
-
-        #deal with the non failed nodes first!
-        for network in networks:
-            agents = network.nodes(type=LineAgent)
-            relevant_agents = [agent for agent in agents if agent.participant_id in selected_participants_ids]
-            if not(relevant_agents): # if this network do not touch the list of particiapnts
-                continue
-            summary_node_dict[network.id]={}
-            summary_node_dict[network.id]['label']=network.id
-            summary_node_dict[network.id]['role']=network.role
-            summary_node_dict[network.id]['current']=False
-            if network.role == "experiment":
-                summary_node_dict[network.id]['x']=[-1] * (exp.M_length + 2)
-                summary_node_dict[network.id]['y']=[-1] * (exp.M_length + 2)
-            else:
-                summary_node_dict[network.id]['x']=[-1] * (max_chain_length + 2)
-                summary_node_dict[network.id]['y']=[-1] * (max_chain_length + 2)
-            for agent in agents:
-                agent_p_id=agent.participant_id
-                if agent_p_id in current_participants_ids:
-                    summary_node_dict[network.id]['label']=str(network.id) + "|" + str(agent_p_id)
-                    summary_node_dict[network.id]['current']=True
-                infos =  agent.infos()
-                for info in infos:
-                    is_fail=info.failed
-                    generation=info.generation
-                    true_seed=info.true_seed
-
-                    try:
-                        contents=int(info.contents)
-                    except:
-                        contents=None
-
-                    net_role=network.role
-                    net_id=network.id
-                    part_id=agent.participant_id
-                    target=contents
-                    value_source=true_seed
-
-                    summary_node={"net_role": net_role, "net_id": net_id, "is_fail": is_fail, "target": target, "source": value_source}
-                    str_summary="net_role: {} net_id: {} is_fail: {} part_id: {} target: {} source: {}".format(net_role,net_id,is_fail,part_id,target,value_source)
-                    #print("is_fail:"+ str(is_fail) + " contents:" + str(contents) )
-                    if not(is_fail):
-                        gen = generation
-                        if (generation<len(summary_node_dict[network.id]['x'])) and (target>=0) and (target<=100):
-                            summary_node_dict[network.id]['x'][generation]=gen
-                            summary_node_dict[network.id]['y'][generation]=target
-
-                        if generation==1:
-                           gen = 0
-                           summary_node_dict[network.id]['x'][0]=gen
-                           summary_node_dict[network.id]['y'][0]=value_source
-
-        for network in networks:
-            agents = Node.query.filter_by(failed=True , network_id=network.id).all()
-            #print("network.id")
-            #print(network.id)
-            #print("agents (failed):")
-            #print(agents)
-            #print("selected paticipants:")
-            #print(selected_participants_ids)
-            #print("->-.-----")
-            for agent in agents:
-                agent_p_id=agent.participant_id
-                #print("->-.-----******")
-                #print agent_p_id
-                #print(selected_participants_ids)
-                if agent_p_id in selected_participants_ids:
-                    if not(summary_node_dict_fail[agent_p_id]):
-                        summary_node_dict_fail[agent_p_id]['label']=agent_p_id
-                        summary_node_dict_fail[agent_p_id]['current']=False
-                        summary_node_dict_fail[agent_p_id]['x']=[]
-                        summary_node_dict_fail[agent_p_id]['y']=[]
-                        summary_node_dict_fail[agent_p_id]['role']=[]
-
-                    generation = agent.generation
-                    #infos =  agent.infos()
-                    true_seed=0
-                    infos =  Info.query.filter_by(origin_id=agent.id, failed=True)
-                    for info in infos:
-                        true_seed = info.true_seed
-                    gen = generation-1;
-                    #print("*****")
-                    #print(agent)
-                    #print("gen:"+ str(generation) + " true_seed:" + str(true_seed) + "failed:" + str(agent.failed))
-                    # if network.role=="experiment":
-                    #     assert(generation<=(exp.M_length+1))
-                    summary_node_dict_fail[agent_p_id]['x'].append(gen)
-                    summary_node_dict_fail[agent_p_id]['y'].append(true_seed)
-                    summary_node_dict_fail[agent_p_id]['role'].append("e" if network.role=="experiment" else "p")
-                    #print('summary_node_dict_fail at initialization')
-                        #print (summary_node_dict_fail)
-
-                if agent_p_id in current_participants_ids:
-                    summary_node_dict_fail[agent_p_id]['label']=str(agent_p_id)+ "<" + str(network.id)
-                    summary_node_dict_fail[agent_p_id]['current']=True
-
-        sps="      *****************           "
-        #print('****> summary_node_dict final')
-        #print (dumps(summary_node_dict))
-        #print('****> summary_node_dict_fail final')
-        #print (dumps(summary_node_dict_fail))
-        # return Response(
-        #         dumps(summary) + sps + dumps(summary_node_dict) + sps + dumps(summary_node_dict_fail) ,
-        #         status=200,
-        #         mimetype='application/json')
-        return render_template('dashboard.html', summary=dumps(summary), chains=dumps(summary_node_dict), failure_points=dumps(summary_node_dict_fail))
-        # mjson= {{ summary }}
-        # cjson= {{ chains }}
-        # fjson= {{ failure_points}}
-    except Exception:
-        import traceback
-        return Response(dumps(traceback.print_exc()), status=400)
-
-
-# @extra_routes.route("/ad_address/<mode>/<hit_id>", methods=["GET"])
-# def ad_address(mode, hit_id):
-
-#     if mode == "debug":
-#         address = '/complete'
-#     elif mode in ["sandbox", "live"]:
-#         CONFIG = PsiturkConfig()
-#         CONFIG.load_config()
-#         username = os.getenv('psiturk_access_key_id', CONFIG.get("psiTurk Access", "psiturk_access_key_id"))
-#         password = os.getenv('psiturk_secret_access_id', CONFIG.get("psiTurk Access", "psiturk_secret_access_id"))
-#         try:
-#             req = requests.get('https://api.psiturk.org/api/ad/lookup/' + hit_id,
-#                                auth=(username, password))
-#         except:
-#             raise ValueError('api_server_not_reachable')
-#         else:
-#             if req.status_code == 200:
-#                 hit_address = req.json()['ad_id']
-#             else:
-#                 raise ValueError("something here")
-#         if mode == "sandbox":
-#             address = 'https://sandbox.ad.psiturk.org/complete/' + str(hit_address)
-#         elif mode == "live":
-#             address = 'https://ad.psiturk.org/complete/' + str(hit_address)
-#     else:
-#         raise ValueError("Unknown mode: {}".format(mode))
-#     return Response(dumps({"address": address}), status=200)
-
-
-# def return_page(page, request):
-#     exp = LineGame(db.session)
-#     try:
-#         hit_id = request.args['hit_id']
-#         assignment_id = request.args['assignment_id']
-#         worker_id = request.args['worker_id']
-#         mode = request.args['mode']
-#         return render_template(
-#             page,
-#             hit_id=hit_id,
-#             assignment_id=assignment_id,
-#             worker_id=worker_id,
-#             mode=mode
-#         )
-#     except:
-#         return exp.error_page(error_type="{} AWS args missing".format(page))
-
-
-# def request_parameter(request, parameter, parameter_type=None, default=None):
-#     """ Get a parameter from a request
-
-#     The request object itself must be passed.
-#     parameter is the name of the parameter you are looking for
-#     parameter_type is the type the parameter should have
-#     default is the value the parameter takes if it has not been passed
-
-#     If the parameter is not found and no default is specified,
-#     or if the parameter is found but is of the wrong type
-#     then a Response object is returned"""
-
-#     exp = LineGame(db.session)
-
-#     # get the parameter
-#     try:
-#         value = request.values[parameter]
-#     except KeyError:
-#         # if it isnt found use the default, or return an error Response
-#         if default is not None:
-#             return default
-#         else:
-#             msg = "{} {} request, {} not specified".format(request.url, request.method, parameter)
-#             exp.log("Error: {}".format(msg))
-#             data = {
-#                 "status": "error",
-#                 "html": error_page(error_type=msg)
-#             }
-#             return Response(
-#                 dumps(data),
-#                 status=400,
-#                 mimetype='application/json')
-
-#     # check the parameter type
-#     if parameter_type is None:
-#         # if no parameter_type is required, return the parameter as is
-#         return value
-#     elif parameter_type == int:
-#         # if int is required, convert to an int
-#         try:
-#             value = int(value)
-#             return value
-#         except ValueError:
-#             msg = "{} {} request, non-numeric {}: {}".format(request.url, request.method, parameter, value)
-#             exp.log("Error: {}".format(msg))
-#             data = {
-#                 "status": "error",
-#                 "html": error_page(error_type=msg)
-#             }
-#             return Response(
-#                 dumps(data),
-#                 status=400,
-#                 mimetype='application/json')
-#     elif parameter_type == "known_class":
-#         # if its a known class check against the known classes
-#         try:
-#             value = exp.known_classes[value]
-#             return value
-#         except KeyError:
-#             msg = "{} {} request, unknown_class: {} for parameter {}".format(request.url, request.method, value, parameter)
-#             exp.log("Error: {}".format(msg))
-#             data = {
-#                 "status": "error",
-#                 "html": error_page(error_type=msg)
-#             }
-#             return Response(
-#                 dumps(data),
-#                 status=400,
-#                 mimetype='application/json')
-#     elif parameter_type == bool:
-#         # if its a boolean, convert to a boolean
-#         if value in ["True", "False"]:
-#             return value == "True"
-#         else:
-#             msg = "{} {} request, non-boolean {}: {}".format(request.url, request.method, parameter, value)
-#             exp.log("Error: {}".format(msg))
-#             data = {
-#                 "status": "error",
-#                 "html": error_page(error_type=msg)
-#             }
-#             return Response(
-#                 dumps(data),
-#                 status=400,
-#                 mimetype='application/json')
-#     else:
-#         msg = "/{} {} request, unknown parameter type: {} for parameter {}".format(request.url, request.method, parameter_type, parameter)
-#         exp.log("Error: {}".format(msg))
-#         data = {
-#             "status": "error",
-#             "html": error_page(error_type=msg)
-#         }
-#         return Response(
-#             dumps(data),
-#             status=400,
-#             mimetype='application/json')
-
-
-# def error_page(participant=None, error_text=None, compensate=True,
-#                error_type="default"):
-#     """Render HTML for error page."""
-#     if error_text is None:
-
-#         error_text = """There has been an error and so you are unable to
-#         continue, sorry! If possible, please return the assignment so someone
-#         else can work on it."""
-
-#         if compensate:
-#             error_text += """Please use the information below to contact us
-#             about compensation"""
-
-#     if participant is not None:
-#         hit_id = participant.hitid,
-#         assignment_id = participant.assignmentid,
-#         worker_id = participant.workerid
-#     else:
-#         hit_id = 'unknown'
-#         assignment_id = 'unknown'
-#         worker_id = 'unknown'
-
-#     return render_template(
-#         'error_wallace.html',
-#         error_text=error_text,
-#         compensate=compensate,
-#         contact_address=config.get(
-#             'HIT Configuration', 'contact_email_on_error'),
-#         error_type=error_type,
-#         hit_id=hit_id,
-#         assignment_id=assignment_id,
-#         worker_id=worker_id
-#     )
 
 
 def date_handler(obj):

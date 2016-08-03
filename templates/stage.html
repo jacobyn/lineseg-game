@@ -1,27 +1,171 @@
+
+
 <!doctype html>
-<html>
-    <head>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Drag and drop</title>
+<style type="text/css">
+
+    #image{ visibility:hidden; }
+
+    .trial_image {
+       position: absolute;
+       visibility: hidden;
+    }
+
+    .image_feedback {
+       position: absolute;
+    }
+
+    .Background {
+       border:4px solid #ffffff;
+    }
+
+    .trial_bcgrd {
+       border: 4px solid #ffffff;
+    }
+
+    .bcgrd_feedback {
+       border:8px solid #ffffff;
+    }
+
+    .fix {
+        visibility: hidden;
+        over-flow: hidden;
+    }
+
+    .dragme {
+        /*visibility: hidden;*/
+        position:relative;
+        cursor: move;
+    }
+
+    #draggable {
+        background-color: #ccc;
+        border: 1px solid #000;
+    }
+
+    body {
+        font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+    }
+    textarea {
+       font-family: inherit;
+       font-size: 12pt;
+    }
+
+    .page {
+        display: none;
+        margin-top: 30px;
+    }
+
+    .page p {
+        font-size: 16pt;
+    }
+
+    .currentTrialIndicator {
+        font-size: 10pt;
+        padding-left: 0px;
+    }
+
+    .currentXYposIndicator {
+        font-size: 5pt;
+        padding-left: 0px;
+    }
+
+    .nextLink {
+        background: #EEE;
+        border: 3px outset black;
+        padding: 8px;
+        color: white;
+        font-size: 14pt;
+        color: #1367a7;
+        text-decoration: none;
+
+        border: 1px solid black;
+        border-radius: 5px ;
+        -moz-border-radius: 5px ;
+        -webkit-border-radius: 5px ;
+    }
+    .nextLink:hover {
+        color: #208799;
+    }
+
+    label > input{ /* HIDE RADIO */
+        visibility: hidden; /* Makes input not-clickable */
+        position: absolute; /* Remove input from document flow */
+    }
+    label > input + img{ /* IMAGE STYLES */
+        cursor:pointer;
+        border:2px solid transparent;
+    }
+    label > input:checked + img{ /* (RADIO CHECKED) IMAGE STYLES */
+        border:2px solid #FC5600;
+    }
+</style>
+
         <script src="/static/scripts/reqwest.min.js" type="text/javascript"> </script>
         <script src="/static/scripts/wallace.js" type="text/javascript"> </script>
         <script src="static/scripts/easeljs-0.7.0.min.js"></script>
         <script src="static/scripts/jquery-2.2.1.min.js"></script>
-        <script src="static/scripts/linegame.js"></script>
+
         <link rel="stylesheet" type="text/css" href="static/css/bootstrap.min.css">
         <link rel="stylesheet" type="text/css" href="static/css/wallace.css">
 
-    </head>
 
-    <body>
-        <h1>Line Segmentation Game</h1>
-         <p id="Counter"> Trial </p>
-        <p id="Feedback">Segment the bar according to the target percentage: </p>
-        <p id="Target"> Target:  %</p>
 
-        <canvas id="demoCanvas" width="700" height="300">
-        </canvas>
-        <p id="Debug"> </p><a href=""></a>
-        <script>
-            create_agent();
-        </script>
-    </body>
+</head>
+<body>
+
+<!-- initial timed presentation -->
+<div style="top: 50px; text-align:center" align="center" class="trial" id="trial">
+<img id="trial_image" src="https://s3.amazonaws.com/thomas-nori-projects/F2114.png" alt="drag-and-drop image script" class="trial_image">
+<img id="trial_bcgrd" src="https://s3.amazonaws.com/thomas-nori-projects/B2114.jpg" alt="drag-and-drop image script" class="trial_bcgrd">
+</div>
+
+<!-- fixation -->
+<div style="top: 50px; text-align:center" align="center" class="fix" id="fix">
+<img id="fix_" src="https://s3.amazonaws.com/thomas-nori-projects/fixation.png" >
+</div>
+
+<div align="center" class="page" id="page10">
+<p>Instructions</p>
+</div>
+
+<!-- drag and drop trial -->
+<div style="top: 50px; text-align:center" align="center" class="page" id="page11">
+    <img id="image" src="https://s3.amazonaws.com/thomas-nori-projects/F2114.png" alt="drag-and-drop image script"
+        title="drag-and-drop image script" class="dragme" style="pointer-events: none;">
+    <img id="bcgrd" src="https://s3.amazonaws.com/thomas-nori-projects/B2114.jpg" alt="drag-and-drop image script"
+        title="drag-and-drop image script" class="Background" onClick="checkS(event)">
+    <p>Please place the object in the exact position it was in before. </p>
+    <p>Simply click with the mouse for the image to appear, and to position it in the frame. </p>
+    <a class="nextLink" href="javascript:NextTrial()">Next</a><br style="line-height: 150%;">
+    <span class="currentTrialIndicator">&nbsp;</span>
+</div>
+
+<!-- drag and drop trial -->
+<div style="top: 50px; text-align:center" align="center" class="page" id="page12">
+<img id="image_feedback" src="https://s3.amazonaws.com/thomas-nori-projects/F2114.png" alt="drag-and-drop image script" class="image_feedback">
+<img id="bcgrd_feedback" src="https://s3.amazonaws.com/thomas-nori-projects/B2114.jpg" alt="drag-and-drop image script" class="bcgrd_feedback">
+<p></p>
+    <div align="center" id="field_name">Feedback message</div>
+<p></p>
+<a class="nextLink" href="javascript:NextTrial()">Next</a><br style="line-height: 150%;">
+<span class="currentTrialIndicator">&nbsp;</span>
+</div>
+
+<!-- Not showing this page yet -->
+<div align="center" class="page" id="page13">
+<p>Do you have any comments?</p>
+ <!-- <p><input type="text" name="howLike" value=""/></p>  -->
+<p><textarea name="howLike" value="" rows="4" cols="42"></textarea></p>
+</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+<!-- <script src="https://timbrady.org/turk/TimTurkTools.js"></script> -->
+
+<script src="static/scripts/visualgame.js"></script>
+
+</body>
 </html>
