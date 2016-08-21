@@ -18,6 +18,7 @@ import requests
 from wallace import db
 config = PsiturkConfig()
 from datetime import datetime
+import math
 
 def list_to_float_array(mystr):
     temp=mystr.replace('[','').replace(']','')
@@ -131,8 +132,22 @@ class VisionGame(Experiment):
         return chosen_network
 
     def node_post_request(self, participant, node):
+        print "NODE POST REQUST HAD HAPPEND\n ########################\n#########################"
         #node.neighbors(connection="from")[0].transmit()
+        print node.neighbors(direction="from")
+        print node.neighbors(direction="from")[0]
+
         node.neighbors(direction="from")[0].transmit()
+        node.receive()
+        print node
+
+
+    def add_node_to_network(self, node, network):
+        """When a node is created it is added to the chain (see Chain in networks.py)
+        and it receives any transmissions."""
+        network.add_node(node)
+        parent = node.neighbors(direction="from")[0]
+        parent.transmit()
         node.receive()
 
     def info_post_request(self, node, info):
@@ -151,12 +166,17 @@ class VisionGame(Experiment):
 
     def setup(self):
         super(VisionGame, self).setup()
+        #print('-----------\ndebug\n----------\n')
         for net in self.networks():
+           # print "network---->"
+           # print net
             if net.role == "practice":
                 net.max_size = 500
             source = VisionSource(network=net)
-            source.create_pattern(self.params)
+            seed=source.create_pattern(self.params)
+            source.seed = seed
             source.generation = 0
+            source.reaction_time = 0
             net.open = True
 
     def recruit(self):
@@ -449,26 +469,66 @@ class MultiChain(Chain):
 
         if prev_agents:
             previous_generation=max([p.generation for p in prev_agents]) + 1
+
         else:
             previous_generation=0
         newcomer.generation = previous_generation
+        #newcomer.neighbors(direction="from")[0].transmit()
+        # print newcomer.neighbors(direction="from")
+        # print "DEBUG HERE (2)"
+        # newcomer.receive()
+        # print "DEBUG HERE (3)"
 
 class VisionSource(Source):
     """ A source that initializes the pattern of the first generation """
 
     @hybrid_property
+    def seed(self):
+        try:
+            val=str(self.property1)
+        except:
+            val=self.property1
+        return val
+
+    @seed.setter
+    def seed(self, my_seed):
+        self.property1 = repr(my_seed)
+
+    @seed.expression
+    def seed(self):
+        return repr(self.property1)
+
+
+
+    @hybrid_property
+    def reaction_time(self):
+        return float(self.property2)
+
+    @reaction_time.setter
+    def reaction_time(self, my_RT):
+        self.property2 = repr(my_RT)
+
+    @reaction_time.expression
+    def reaction_time(self):
+        return cast(self.property2, Float)
+
+
+
+    @hybrid_property
     def generation(self):
-        if not self.property1:
+        if self.property5:
+            return int(self.property3)
+        else:
             return 0
-        return int(self.property1)
 
     @generation.setter
-    def generation(self, generation):
-        self.property1 = repr(generation)
+    def generation(self, my_generation):
+        self.property3 = repr(my_generation)
 
     @generation.expression
     def generation(self):
-        return cast(self.property1, Integer)
+        return cast(self.property3, Integer)
+
 
     __mapper_args__ = {"polymorphic_identity": "vision_source"}
 
@@ -481,15 +541,20 @@ class VisionSource(Source):
         assert(mydimensions==params['my_dimensions'])
         range_max=params['range_max']
         range_min=params['range_min']
+#        percision=params['percision']
+        percision=4
 
         assert(len(range_max)==len(range_min))
 
         seed=[]
         for i in range(mydimensions):
-            seed.append(random.random()*(range_max[i]-range_min[i])+range_min[i])
+            seed.append(round(random.random()*(range_max[i]-range_min[i])+range_min[i],percision))
 
+        print "creating seed: {}".format(seed)
         assert(len(seed)==mydimensions)
+
         VisionInfo(origin=self, contents=str(seed))
+        return str(seed)
 
 
 class VisionAgent(Agent):
@@ -560,8 +625,16 @@ extra_routes = Blueprint(
 @extra_routes.route("/get_trial_params/<int:node_id>/<int:participant_id>", methods=["GET"])
 def get_trial_params(node_id,participant_id):
     exp = VisionGame(db.session)
-    node = VisionAgent.query.get(node_id)
+    node = Node.query.get(node_id)
+    #node = VisionAgent.query.get(node_id)
 
+    #nodes = VisionAgent.query.filter_by(participant_id=participant_id, failed=False).all()
+    #the_nodes = [n for n in nodes if n.id==node_id]
+    print "--------##-------"
+    print node
+    print "--------##-------"
+
+    #node=the_nodes[0]
     #net=node.network_id
     #net=Network.query.get(network_id)
 

@@ -1,40 +1,51 @@
-var norm_dist_x = undefined;
-var norm_dist_y = undefined;
+//var norm_dist_x = undefined;
+//var norm_dist_y = undefined;
 
 
 ////////////////////////////////////// NORI ///////////////////
 
-var DO_WALLACE=true;
-var WAIT_TIME=2000; // in between trials wait time
-var MAX_TIME_TRIAL=20*1000;
+var DO_WALLACE = false;
+var WAIT_TIME = 2000; // in between trials wait time
+var MAX_TIME_TRIAL = 20 * 1000;
 
  // set to correct or incorrect
 var outcome = undefined;
-DEBUG = true
-var my_node_id
-var my_network_id
-var generation
-var mytrial_params='EMPTY'
-var mycontents='EMPTY'
-var myresponse='EMPTY'
-var myrt=0
+var DEBUG = true;
+var my_node_id;
+var my_network_id;
+var generation;
+var mytrial_params = 'EMPTY';
+var mycontents = 'EMPTY';
+var myresponse = 'EMPTY';
+var myrt = 0;
+var err_time = undefined;
 
+function create_agent() {
+    outcome = undefined;
+    my_node_id = undefined;
+    my_network_id = undefined
+    generation = undefined
+    mytrial_params = 'EMPTY';
+    mycontents = 'EMPTY';
+    myresponse = 'EMPTY';
+    myrt = 0;
+    err_time = undefined;
 
-function create_agent () {
     if (DEBUG) {
         console.log ("(1) create agent" )
     }
+    err_time = setTimeout(function(){},MAX_TIME_TRIAL); // just set time don't do anything actually
 
     reqwest({
         url: "/node/" + participant_id,
         method: 'post',
         type: 'json',
         success: function (resp) {
-            if (DEBUG) {
-               console.log ("-->(2) create agent: " + "__ participant_id" + participant_id);
-            }
 
             my_node_id = resp.node.id;
+             if (DEBUG) {
+               console.log("-->(2) create agent: node id:  " + my_node_id + "__ participant_id:  " + participant_id);
+            }
             my_network_id = resp.node.network_id;
             get_trial_params()
 
@@ -45,6 +56,7 @@ function create_agent () {
             if (err_response.hasOwnProperty('html')) {
                 $('body').html(err_response.html);
             } else {
+                //$('body').html(err_response)
                 allow_exit();
                 go_to_page("debriefing/debrief-1");
             }
@@ -54,7 +66,7 @@ function create_agent () {
 
 function get_trial_params() {
     if (DEBUG) {
-        console.log ("(3) trial: get_trial_params"  );
+        console.log("(3) trial: get_trial_params"  );
     }
    reqwest ({
     // /get_trial_params/<int:node_id>/<int:participant_id>", methods=["GET"])
@@ -63,7 +75,8 @@ function get_trial_params() {
     type: 'json',
     success: function (resp) {
         if (DEBUG) {
-               console.log ("--->(4) get trial params:" );
+               console.log("--->(4) get trial params:" );
+               console.log(resp);
             }
 
         mytrial_params=resp.trial_params
@@ -75,14 +88,14 @@ function get_trial_params() {
 
         console.log(err);
         clearTimeout(err_time);
-        err_time=setTimeout(function(){create_agent();},WAIT_TIME*2);
+        err_time = setTimeout(function(){create_agent();},WAIT_TIME*2);
     }
 });
 }
 
 function get_contents(mytrial_params) {
     if (DEBUG) {
-        console.log ("(5) get_contents" );
+        console.log("(5) get_contents" );
     }
     reqwest ({
         url: "/node/" + my_node_id + "/received_infos",
@@ -90,7 +103,9 @@ function get_contents(mytrial_params) {
         type: 'json',
         success: function (resp) {
             if (DEBUG) {
-               console.log ("---> (6) we received_infos");
+               console.log("---> (6) we received_infos");
+                console.log(resp);
+
             }
             mycontents=resp.infos[0].contents
 
@@ -101,7 +116,7 @@ function get_contents(mytrial_params) {
         error: function (err) {
         console.log(err);
         clearTimeout(err_time);
-        err_time=setTimeout(function(){create_agent();},WAIT_TIME*2);
+        err_time = setTimeout(function(){create_agent();},WAIT_TIME*2);
         }
     });
 }
@@ -123,7 +138,7 @@ function init() {
     // Set position using normalized offset values (which we will get from Wallace)
     var cont = function() {
       setImagePosition(trial_image, trial_bcgrd, x_Correct, y_Correct);
-      ShowTrial(currentTrial);
+      ShowTrialStart(currentTrial);
       document.getElementById("trial_image").style.visibility = "visible";
     };
     var ti = $('#trial_image');
@@ -147,12 +162,12 @@ function finished(){
     type: 'json',
     data: {
         contents: myresponse,
-        info_type: "LineInfo",
+        info_type: "VisionInfo",
             property1: mycontents, // number of failed trials
-            property2: myrt, // bandit_id
+            property2: myrt, // bandit_idf
             property3: 0, // remembered
             property4: 0,
-            property5: GENERATION
+            property5: generation
         },
         success: function (resp) {
              if (DEBUG) {
@@ -165,7 +180,7 @@ function finished(){
             console.log(err);
             clearTimeout(err_time);
 
-            err_time=setTimeout(function(){create_agent();},WAIT_TIME/2);
+            err_time = setTimeout(function(){create_agent();},WAIT_TIME/2);
 
         }
   });
@@ -179,6 +194,10 @@ function get_params(contents,trial_params) {
         // var trial_params = JSON.parse(mytrial_params);
         // contents (need to parse this, it's a string)
         // var contents = JSON.parse(mycontents);
+        mycontents = JSON.parse(contents);
+        mytrial_params = JSON.parse(trial_params);
+        contents=mycontents;
+        trial_params=mytrial_params;
 
         // get normalized horizontal offset of target (from left border of background)
         x_Correct = contents[0]; // contents[0];
@@ -254,6 +273,7 @@ function make_response(chosen_x, chosen_y, rt) {
 }
 
 $(document).ready(function(){
+    console.log("ready!");
     if (DO_WALLACE) { create_agent ();} else  {init()}
 
     // // call get_params
@@ -347,40 +367,7 @@ function set_src() {
     document.getElementById("bcgrd_feedback").src = bcgrd_src;
 }
 
-
-
-function ShowTrial(which) {
-    if (which >= order.length - 1) {
-        var page = "#page" + order[which];
-        $(page).show();
-
-        // present image in the position chosen for feedback page
-        var feedbackImage = document.getElementById('image_feedback');
-        var feedbackBackground = document.getElementById('bcgrd_feedback');
-        setImagePosition(feedbackImage, feedbackBackground, norm_dist_x, norm_dist_y);
-
-
-        rt = 0; // <get response time...>
-        make_response(norm_dist_x, norm_dist_y, rt);
-
-        // for changing the feedback message
-        var fieldNameElement = document.getElementById('field_name');
-
-        if (Math.abs(norm_dist_x - x_Correct) < margin_error_x
-               && Math.abs(norm_dist_y - y_Correct) < margin_error_y) {
-            // make border green if correct
-            feedbackBackground.style.borderColor = '#00FF00'; //#ff8080
-            // Display feedback message (correct!)
-            fieldNameElement.innerHTML = "You are correct!";
-            outcome = "Correct"
-        } else {
-            // make border red if incorrect
-            feedbackBackground.style.borderColor= '#ff8080';
-            // display feedback message (incorrect!)
-            fieldNameElement.innerHTML = "You are not correct";
-            outcome = "Incorrect"
-        }
-    } else {
+function ShowTrialStart(which) {
         // init the target somewhere on the canvas (center)
         var myImg = document.querySelector("#trial_bcgrd");
         var Width_bcgrd = myImg.naturalWidth;
@@ -411,7 +398,40 @@ function ShowTrial(which) {
         // $(page).show();
         var showTrial = which+1; // 0 indexed to 1 indexed
         $(".currentTrialIndicator").text("Current trial: " + showTrial + " of " + order.length); // replace trial number
-    }
+}
+
+
+function ShowTrialEnd(which) {
+        var page = "#page" + order[which];
+        $(page).show();
+
+        // present image in the position chosen for feedback page
+        var feedbackImage = document.getElementById('image_feedback');
+        var feedbackBackground = document.getElementById('bcgrd_feedback');
+        setImagePosition(feedbackImage, feedbackBackground, norm_dist_x, norm_dist_y);
+
+
+        rt = 0; // <get response time...>
+        make_response(norm_dist_x, norm_dist_y, rt);
+
+        // for changing the feedback message
+        var fieldNameElement = document.getElementById('field_name');
+
+        if (Math.abs(norm_dist_x - x_Correct) < margin_error_x
+               && Math.abs(norm_dist_y - y_Correct) < margin_error_y) {
+            // make border green if correct
+            feedbackBackground.style.borderColor = '#00FF00'; //#ff8080
+            // Display feedback message (correct!)
+            fieldNameElement.innerHTML = "You are correct!";
+            outcome = "Correct"
+        } else {
+            // make border red if incorrect
+            feedbackBackground.style.borderColor= '#ff8080';
+            // display feedback message (incorrect!)
+            fieldNameElement.innerHTML = "You are not correct";
+            outcome = "Incorrect"
+        }
+
 }
 
 function NextTrial() {
@@ -422,7 +442,7 @@ function NextTrial() {
         $("#page" + order[currentTrial]).hide();
         currentTrial++;
         setTimeout(function() {
-            ShowTrial(currentTrial);
+            ShowTrialEnd(currentTrial);
         }, 1000);
     }
 }
